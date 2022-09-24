@@ -1,7 +1,7 @@
-# Camera Surveillance System with Object Detection
+# Sistema de Câmeras de Segurança com Detecção de Objetos
 
-The goal of this project is to detect suspicious movement in surveillance cameras using object detection in order to prevent possible invasions.
+O objetivo deste projeto é detectar movimentos suspeitos em imagens de câmeras de segurança usando detecção de objetos para prevenir possíveis invasões em casas e estabelecimentos.
 
-By drawing an area in the image and watching out for detections, a trigger is created, which will fire depending on the time of the day and how long the detections stayed in the area, all configurable by the user.
+O sistema para Windows permite que sejam criados gatilhos desenhando áreas na imagem em que detecções serão analisadas, assim como configurar por quanto tempo uma detecção poderá permanecer nesta área e em quais horários. Se as condições de um gatilho forem satisfeitas, uma notificação ou alarme é enviado para um smartphone. Este sistema também age como servidor para o aplicativo Android.
 
-When a trigger fires, an alert is sent to the user through a mobile app.
+A partir do aplicativo Android, é possível receber as notificações e visualizar as imagens das câmeras via rede local.
