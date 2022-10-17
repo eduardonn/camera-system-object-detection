@@ -25,7 +25,7 @@ class DetectionTester:
         self.endPoint = (mouseX + self.boxSize[0], mouseY + self.boxSize[1])
         
         import gatilhos
-        for gatilho in gatilhos.listaGatilhos:
+        for gatilho in gatilhos.triggerList:
             startPointMouse = (int(gatilho.areaStartX * w), int(gatilho.areaStartY * h))
             endPointMouse = (int(gatilho.areaEndX * w), int(gatilho.areaEndY * h))
 

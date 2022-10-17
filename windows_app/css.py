@@ -1,5 +1,6 @@
 backgroundColor = 'rgb(35, 35, 35)'
 buttonHoverColor = 'rgb(80, 80, 80)'
+buttonPressedColor = 'rgb(110, 110, 110)'
 
 windowStyle = '''
     *{
@@ -8,7 +9,7 @@ windowStyle = '''
         color: rgb(235, 235, 235);
     }
 
-    *#windowStyle {
+    *#window {
         background: ''' + backgroundColor + '''
     }
 '''
@@ -22,8 +23,11 @@ btnStyle =  '''
         padding: 5%;
         margin: 0px;
     }
-    QPushButton:hover{
+    QPushButton:hover {
         background: ''' + buttonHoverColor + ''';
+    }
+    QPushButton:pressed {
+        background: ''' + buttonPressedColor + ''';
     }
     '''
 
@@ -33,8 +37,25 @@ btnTriggerStyle =  '''
         padding: 5%;
         margin: 0px;
     }
-    QPushButton:hover{
+    QPushButton:hover {
         background: ''' + buttonHoverColor + ''';
+    }
+    QPushButton:pressed {
+        background: ''' + buttonPressedColor + ''';
+    }
+    '''
+
+blobSizeTextEdit = '''
+    QLineEdit {
+        padding: 2px;
+        background: black;
+    }
+'''
+
+imageSettingButton = '''
+    QPushButton {
+        padding: 0;
+        margin: 0px;
     }
     '''
 
@@ -46,14 +67,14 @@ scrollAreaStyle = '''
 '''
 
 gatilhoPadrao = '''
-    QWidget#gatilhoBackground {
+    QWidget#triggerBackground {
         background-color: rgb(45, 45, 45);
         border: 2px inset gray;
     }
     '''
 
 gatilhoAcionado = '''
-    QWidget#gatilhoBackground {
+    QWidget#triggerBackground {
         background-color: rgb(45, 45, 45);
         border: 2px inset red;
     }

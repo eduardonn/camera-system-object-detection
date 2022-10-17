@@ -1,73 +1,109 @@
 import os
 from PyQt5.QtWidgets import QLabel, QPushButton, QVBoxLayout, QHBoxLayout, QSizePolicy
-from PyQt5.QtWidgets import QWidget, QComboBox, QTimeEdit, QLineEdit, QScrollArea, QCheckBox, QTextEdit, QPlainTextEdit
-from PyQt5.QtGui import QCursor, QIcon
-from PyQt5.QtCore import Qt, QSize
-import utils
+from PyQt5.QtWidgets import QWidget, QComboBox, QTimeEdit, QLineEdit, QScrollArea, QCheckBox, QLayout
+from PyQt5.QtGui import QCursor, QIcon, QIntValidator
+from PyQt5.QtCore import Qt
+from image_widget import ImageWidget
 import css
 
 filePath = __file__[:-len(os.path.basename(__file__))]
 
 def initMainWindowLayout(UI):
-    UI.setObjectName('windowStyle')
+    UI.setGeometry(50, 50, 1250, 660)
+    # UI.setFixedSize(1150, 620)
+    UI.setObjectName('window')
     UI.setStyleSheet(css.windowStyle)
-    
-    # Button grade
-    btnAlterarGrade = QPushButton("Alterar Grade")
-    btnAlterarGrade.setStyleSheet(css.btnStyle)
-    btnAlterarGrade.clicked.connect(alterarGrade)
 
     # Button gatilhos
     btnGatilhos = QPushButton("Gatilhos")
     btnGatilhos.setStyleSheet(css.btnStyle)
     btnGatilhos.clicked.connect(UI.openGatilhosWindow)
 
-    # Button visualizar detecções
-    UI.btnViewGatilhos = QCheckBox('Visualizar Gatilhos')
-    UI.btnViewGatilhos.setStyleSheet(css.checkBoxStyle)
-    # UI.btnViewGatilhos.setChecked(True)
+    # Button
+    # btnBlobSize = QPushButton()
+    # btnBlobSize.setContentsMargins(0, 0, 0 ,0)
+    # btnBlobSize.setStyleSheet(css.btnTriggerStyle + css.imageSettingButton)
+    # btnBlobSize.setIcon(QIcon(filePath + '/Assets/blob_size_icon.png'))
+    # btnBlobSize.clicked.connect(lambda: print('btn pressed'))
+
+    # CheckBox visualizar detecções
+    UI.checkboxViewGatilhos = QCheckBox('Visualizar Gatilhos')
+    UI.checkboxViewGatilhos.setStyleSheet(css.checkBoxStyle)
+    # UI.checkboxViewGatilhos.setChecked(True)
 
     # Image
-    UI.camImg = QLabel()
-    UI.camImg.setStyleSheet(css.imageStyle)
-    UI.camImg2 = QLabel()
-    UI.camImg2.setStyleSheet(css.imageStyle)
+    UI.camImgs = []
+    UI.camImgs.append(ImageWidget(UI.handleImageClick))
+    UI.camImgs[0].setStyleSheet(css.imageStyle)
+    # UI.camImgs[0].setScaledContents(True)
+    # UI.camImgs[0].setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Ignored)
+    UI.camImgs.append(ImageWidget(UI.handleImageClick))
+    UI.camImgs[1].setStyleSheet(css.imageStyle)
+    # UI.camImgs[1].setScaledContents(True)
+    # # UI.camImgs[1].setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Ignored)
 
     # Labels
     lClientConnected = QLabel('Cliente: ')
     UI.lClientConnectedValue = QLabel('Disconnected')
     UI.lClientConnectedValue.setStyleSheet(css.textRed)
     # UI.lLogPanel = QLabel('Log')
+    lImg1BlobSize = QLabel('Blob Size Imagem 1:')
+    lImg2BlobSize = QLabel('Blob Size Imagem 2:')
 
     # Painel de Log
     # UI.logPanel = QTextEdit()
     # utils.logPanel = UI.logPanel
 
+    # LineEdit
+    UI.inputBlobSize = []
+    for i in range(2):
+        UI.inputBlobSize.append(QLineEdit())
+        UI.inputBlobSize[i].setMaximumSize(45, 28)
+        UI.inputBlobSize[i].setStyleSheet(css.blobSizeTextEdit)
+        UI.inputBlobSize[i].setText(str(UI.detector.blobSizes[i]))
+        UI.inputBlobSize[i].setValidator(QIntValidator(100, 1200))
+        # UI.inputBlobSize[i].textChanged.connect(lambda value: UI.imgManager.detector.setBlobSize(value, i))
+    UI.inputBlobSize[0].textChanged.connect(lambda value: UI.detector.setBlobSize(value, 0))
+    UI.inputBlobSize[1].textChanged.connect(lambda value: UI.detector.setBlobSize(value, 1))
+
     # Layout organization
     vBoxMain = QVBoxLayout()
+    vBoxMain.setSizeConstraint(QLayout.SetMinimumSize)
     hBoxTop = QHBoxLayout()
     hBoxBottom = QHBoxLayout()
     vBoxLogPanel = QVBoxLayout()
     vBoxImages = QVBoxLayout()
+    hBoxImg1BlobSize = QHBoxLayout()
+    hBoxImg2BlobSize = QHBoxLayout()
+    # vBoxImage1 = QVBoxLayout(UI.camImgs[0])
     hBoxClientInfo = QHBoxLayout()
-    # UI.vBox.setSpacing(4)
-    hBoxTop.setContentsMargins(0, 0, 0, 0)
+    # hBoxTop.setContentsMargins(0, 0, 0, 0)
     hBoxTop.setAlignment(Qt.AlignTop)
-    hBoxTop.addWidget(btnAlterarGrade)
     hBoxTop.addWidget(btnGatilhos)
-    hBoxTop.addWidget(UI.btnViewGatilhos)
+    hBoxTop.addWidget(UI.checkboxViewGatilhos)
     hBoxClientInfo.addWidget(lClientConnected)
     hBoxClientInfo.addWidget(UI.lClientConnectedValue)
     # UI.vBox.setSpacing(0)
     # UI.hBox.setAlignment(Qt.AlignLeft)
     hBoxClientInfo.setAlignment(Qt.AlignRight)
-    vBoxImages.setAlignment(Qt.AlignHCenter | Qt.AlignTop)
-    vBoxImages.addWidget(UI.camImg, alignment=Qt.AlignVCenter)
-    vBoxImages.addWidget(UI.camImg2, alignment=Qt.AlignVCenter)
-    hBoxBottom.setAlignment(Qt.AlignVCenter)
+    hBoxImg1BlobSize.addWidget(lImg1BlobSize, alignment=Qt.AlignRight)
+    hBoxImg1BlobSize.addWidget(UI.inputBlobSize[0], alignment=Qt.AlignLeft)
+    hBoxImg2BlobSize.addWidget(lImg2BlobSize, alignment=Qt.AlignRight)
+    hBoxImg2BlobSize.addWidget(UI.inputBlobSize[1], alignment=Qt.AlignLeft)
+    # vBoxImages.setAlignment(Qt.AlignTop)
+    # vBoxImage1.addWidget(btnBlobSize, alignment=Qt.AlignTop | Qt.AlignRight)
+    # vBoxImage1.addWidget(UI.camImgs[0], alignment=Qt.AlignCenter)
+    # vBoxImages.addWidget(vBoxImage1)
+    vBoxImages.addWidget(UI.camImgs[0], alignment=Qt.AlignCenter)
+    vBoxImages.addWidget(UI.camImgs[1], alignment=Qt.AlignCenter)
+    # hBoxBottom.setAlignment(Qt.AlignCenter)
+    hBoxTop.addLayout(hBoxImg1BlobSize)
+    hBoxTop.addLayout(hBoxImg2BlobSize)
     hBoxTop.addLayout(hBoxClientInfo)
     vBoxMain.addLayout(hBoxTop)
     vBoxMain.addLayout(hBoxBottom)
+    vBoxMain.setStretchFactor(hBoxTop, 1)
+    vBoxMain.setStretchFactor(hBoxBottom, 100)
     hBoxBottom.addLayout(vBoxImages)
     # hBoxBottom.addLayout(UI.vBoxLogPanel)
     # vBoxLogPanel.addWidget(UI.lLogPanel, alignment=Qt.AlignHCenter)
@@ -77,7 +113,7 @@ def initMainWindowLayout(UI):
     UI.show()
 
 def gatilhosWindowLayout(UI):
-    UI.setObjectName('windowStyle')
+    UI.setObjectName('window')
     UI.setStyleSheet(css.windowStyle)
 
     # Buttons
@@ -120,8 +156,10 @@ def gatilhosWindowLayout(UI):
     UI.show()
 
 def addTriggerWindowLayout(UI):
-    UI.setObjectName('windowStyle')
+    UI.setObjectName('window')
     UI.setStyleSheet(css.windowStyle)
+    UI.setGeometry(100, 50, 700, 440)
+    UI.setWindowTitle('Adicionar Gatilho')
 
     # Buttons
     btnConfirm = QPushButton("Confirmar")
@@ -191,42 +229,42 @@ def addTriggerWindowLayout(UI):
     UI.setLayout(vBoxMain)
     UI.show()
 
-def addGatilho(UI, gatilho):
-    gatilho.widget = gatilhoBackground = QWidget()
-    gatilhoBackground.setObjectName('gatilhoBackground')
+def addTrigger(UI, trigger):
+    trigger.widget = triggerBackground = QWidget()
+    triggerBackground.setObjectName('triggerBackground')
     
     # Button delete
     btnDelete = QPushButton()
     btnDelete.setIcon(QIcon(filePath + '/Assets/delete_white.png'))
-    btnDelete.clicked.connect(gatilho.remove)
+    btnDelete.clicked.connect(trigger.remove)
     btnDelete.setCursor(QCursor(Qt.PointingHandCursor))
     btnDelete.setStyleSheet(css.btnTriggerStyle)
     
     # Button reset
     btnReset = QPushButton('Resetar')
-    btnReset.clicked.connect(gatilho.reset)
+    btnReset.clicked.connect(trigger.reset)
     btnReset.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Maximum)
     btnReset.setStyleSheet(css.btnTriggerStyle)
 
     # Trigger style
-    if gatilho.acionado:
-        gatilhoBackground.setStyleSheet(css.gatilhoAcionado)
+    if trigger.acionado:
+        triggerBackground.setStyleSheet(css.gatilhoAcionado)
     else:
-        gatilhoBackground.setStyleSheet(css.gatilhoPadrao)
+        triggerBackground.setStyleSheet(css.gatilhoPadrao)
 
     # Labels
-    lNomeGatilho = QLabel(gatilho.nome if gatilho.nome != '' else 'Gatilho ' + str(gatilho.id))
+    lNomeGatilho = QLabel(trigger.nome if trigger.nome != '' else 'Gatilho ' + str(trigger.id))
     lNomeGatilho.setStyleSheet(css.titulo)
-    lAcao = QLabel("Ação: " + gatilho.acao)
-    lTempoPermanencia = QLabel("Tempo de permanência: " + str(gatilho.tempoPermanencia))
-    lHorarios = QLabel("Horarios de detecção:")
-    lHorariosValues = QLabel(gatilho.horarioInicial + ' até ' + gatilho.horarioFinal)
+    lAcao = QLabel("Ação: " + trigger.acao)
+    lTempoPermanencia = QLabel("Tempo de permanência: " + str(trigger.tempoPermanencia))
+    lHorarios = QLabel("Horários de detecção:")
+    lHorariosValues = QLabel(trigger.initialTime + ' até ' + trigger.finalTime)
     lTempoPermaneceuDescricao = QLabel('Tempo Permaneceu:')
     # lTempoPermaneceuDescricao.setSizePolicy(Qt.QSizePolicy.Fixed)
-    gatilho.lTempoPermaneceu = QLabel(str(round(gatilho.tempoPermaneceu, 3)))
+    trigger.lTempoPermaneceu = QLabel(str(round(trigger.tempoPermaneceu, 3)))
 
     # Layout organization
-    vBoxMain = QVBoxLayout(gatilhoBackground) # QVBoxLayout com QWidget como parent para estilizar o layout
+    vBoxMain = QVBoxLayout(triggerBackground) # QVBoxLayout com QWidget como parent para estilizar o layout
     hBoxInfo = QHBoxLayout()
     hBoxTop = QHBoxLayout()
     vBoxLeft = QVBoxLayout()
@@ -234,7 +272,7 @@ def addGatilho(UI, gatilho):
     hBoxTempoPermaneceu = QHBoxLayout()
     hBoxHorarios = QHBoxLayout()
     vBoxBtnReset = QVBoxLayout()
-    UI.vBoxGatilhos.addWidget(gatilhoBackground)
+    UI.vBoxGatilhos.addWidget(triggerBackground)
     hBoxTop.addWidget(lNomeGatilho, alignment=Qt.AlignTop)
     hBoxTop.addWidget(btnDelete, alignment=Qt.AlignRight)
     hBoxInfo.setAlignment(Qt.AlignTop)
@@ -243,7 +281,7 @@ def addGatilho(UI, gatilho):
     vBoxTempoPermanencia.addLayout(hBoxTempoPermaneceu)
     vBoxTempoPermanencia.setAlignment(Qt.AlignRight)
     hBoxTempoPermaneceu.addWidget(lTempoPermaneceuDescricao)
-    hBoxTempoPermaneceu.addWidget(gatilho.lTempoPermaneceu)
+    hBoxTempoPermaneceu.addWidget(trigger.lTempoPermaneceu)
     hBoxHorarios.addWidget(lHorarios)
     hBoxHorarios.addWidget(lHorariosValues)
     vBoxBtnReset.addWidget(btnReset, alignment=Qt.AlignBottom)
@@ -253,6 +291,3 @@ def addGatilho(UI, gatilho):
     hBoxInfo.addLayout(vBoxLeft)
     hBoxInfo.addLayout(vBoxTempoPermanencia)
     hBoxInfo.addLayout(vBoxBtnReset)
-
-def alterarGrade(UI):
-    pass

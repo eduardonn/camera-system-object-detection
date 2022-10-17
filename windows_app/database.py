@@ -7,8 +7,8 @@ def createGatilho(gatilho):
     # cursor.execute('INSERT INTO gatilhos values (ROWID, ?)', (nomeGatilho))
     cursor.execute('INSERT INTO gatilhos values (?,?,?,?,?,?,?,?,?)', (
                     gatilho.nome,
-                    gatilho.horarioInicial,
-                    gatilho.horarioFinal,
+                    gatilho.initialTime,
+                    gatilho.finalTime,
                     gatilho.tempoPermanencia,
                     gatilho.acao,
                     gatilho.areaStartX,

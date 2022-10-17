@@ -1,101 +1,133 @@
 import sys
 import os
 import cv2
+import time
 import numpy as np
 from PyQt5.QtWidgets import QApplication, QWidget
-from PyQt5.QtGui import QPixmap, QImage, QIcon, QFont
-from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QPixmap, QImage, QIcon
+from PyQt5.QtCore import Qt, pyqtSignal
 from add_trigger_window import AddTriggerWindow
 from image_manager import ImageManager
-from gatilhos_window import GatilhosWindow
+from gatilhos_window import TriggersWindow
 from detection_tester import DetectionTester
 from area_painter import AreaPainter
 from server import ServerConnection
+from image_widget import ImageWidget
+from detector import SSDDetector
 import layout
 import gatilhos
 import css
 
 class GUI(QWidget):
+    setImagePixmapSignal = pyqtSignal(ImageWidget, QPixmap)
+    updateClientStatusSignal = pyqtSignal(bool)
+
     def __init__(self):
         super().__init__()
-
         self.filePath = __file__[:-len(os.path.basename(__file__))]
-        self.initMainWindow()
         self.bVisualizarAreas = True
         self.gatilhosThread = gatilhos.initGatilhos(self.updateGatilhoState)
         self.imgManager = ImageManager()
+        self.detector = SSDDetector(gatilhos.updateGatilhosDetection)
+        self.detector.start()
+        self.imgManager.onUpdateFrame.append(self.detector.setFrame)
+        self.initMainWindow()
         self.areaPainter = AreaPainter()
-        self.server = ServerConnection(self.updateClientStatus)
-        self.server.start()
-
-        # Configurar imagem "sem sinal"
-        frame = cv2.imread(self.filePath + "/Assets/sem_sinal.jpg")
-        frameResized = cv2.resize(frame, (300, 300))
-        height, width, _ = frameResized.shape
-        bytesPerLine = 3 * width
-        qImg = QImage(frameResized.data, width, height, bytesPerLine, QImage.Format_RGB888).rgbSwapped()
-        image = QPixmap(qImg)
-        self.camImg.setPixmap(image)
+        self.updateClientStatusSignal.connect(self.updateClientStatus)
+        self.server = ServerConnection(lambda status: self.updateClientStatusSignal.emit(status))
+        # self.server.start()
+        self.focusedImage = None
+        self.deactivateCheckBoxTimer = time.time()
 
         self.initImgWidget()
-        ImageManager.updateFrameEvent.append(self.updateFrame)
+        self.setImagePixmapSignal.connect(self.setImagePixmap)
+        ImageManager.onUpdateFrame.append(self.updateFrame)
 
     def initMainWindow(self):
-        self.setGeometry(50, 50, 1000, 440)
         self.setWindowTitle('Camera Surveillance System')
-        self.setWindowIcon(QIcon(self.filePath + '/Assets/icone.png'))
-        # self.setFont(QFont('Times', 10))
-        # self.setStyleSheet("background-color: lightgrey")
+        self.setWindowIcon(QIcon(self.filePath + '/assets/icone.png'))
 
         layout.initMainWindowLayout(self)
 
-        # self.openGatilhosWindow()
-        # self.openDrawAreaWindow()
-
     def initImgWidget(self):
-        h, w = ImageManager.frame.shape[:2]
+        h, w = self.imgManager.frameResolution
 
-        maxImgHeight = 345
-        newWidth = int(w * (float(maxImgHeight) / h))
-        self.camImgShape = (newWidth, maxImgHeight)
-        # self.camImg.setMaximumSize(self.camImgShape[0], self.camImgShape[1])
+        initialHeight = 300
+        aspectRatio = float(w) / float(h)
+        initialWidth = int(initialHeight * aspectRatio)
+        self.initialCamImgShape = (initialWidth, initialHeight)
+        self.focusedCamImgShape = (initialWidth * 2, initialHeight * 2)
+        self.camImgShape = self.initialCamImgShape
 
-        # scaleFactor = .32
-        # self.camImgShape = (int(w * scaleFactor), int(h * scaleFactor))
-        # self.camImg.setMaximumSize(self.camImgShape[0], self.camImgShape[1])
+        # Configurar imagem "sem sinal"
+        frame = cv2.imread(self.filePath + "/assets/sem_sinal.jpg")
 
-        width, height = self.camImgShape
+        self.focusOnImage(self.camImgs[0])
+        
+        width, height = self.initialCamImgShape
         bytesPerLine = 3 * width
-        frameResized = cv2.resize(ImageManager.frame, self.camImgShape)
-        # frameResized = cv.resize(ImageManager.frameBuffer[:], self.camImgShape)
+        frameResized = cv2.resize(frame, self.initialCamImgShape)
 
-        self.camImgQImage = QImage(frameResized.data, width, height, bytesPerLine, QImage.Format_RGB888).rgbSwapped()
-        self.camImgPixmap = QPixmap(self.camImgQImage)
-        self.camImg.setPixmap(self.camImgPixmap)
+        camImgQImage = QImage(frameResized.data, width, height, bytesPerLine, QImage.Format_RGB888).rgbSwapped()
+        camImgPixmap = QPixmap(camImgQImage)
+        self.camImgs[0].setPixmap(camImgPixmap)
+        self.camImgs[1].setPixmap(camImgPixmap)
+
+        self.camImgs[0].setMaximumSize(self.camImgShape[0], self.camImgShape[1])
+        self.camImgs[1].setMaximumSize(self.camImgShape[0], self.camImgShape[1])
+
+    def handleImageClick(self, imgToFocus):
+        if self.focusedImage is None:
+            self.focusOnImage(imgToFocus)
+        else:
+            self.unfocusImages()
+
+    def focusOnImage(self, imgToFocus):
+        self.camImgs[0].setMaximumSize(self.focusedCamImgShape[0], self.focusedCamImgShape[1])
+        self.camImgs[1].setMaximumSize(self.focusedCamImgShape[0], self.focusedCamImgShape[1])
+        self.camImgShape = self.focusedCamImgShape
+        
+        self.focusedImage = imgToFocus
+        for img in self.camImgs:
+            if img != self.focusedImage:
+                img.hide()
+    
+    def unfocusImages(self):
+        self.camImgs[0].setMaximumSize(self.initialCamImgShape[0], self.initialCamImgShape[1])
+        self.camImgs[1].setMaximumSize(self.initialCamImgShape[0], self.initialCamImgShape[1])
+        self.camImgShape = self.initialCamImgShape
+
+        for img in self.camImgs:
+            if img != self.focusedImage:
+                img.show()
+        self.focusedImage = None
 
     def updateFrame(self, frame):
-        frameResized = cv2.resize(frame, self.camImgShape)
-        
-        frameResized2 = cv2.resize(self.imgManager.detector.croppedFrame, self.camImgShape)
-        self.camImg2.setMaximumSize(self.camImgShape[0], self.camImgShape[1])
+        frameWithDetections = self.detector.drawDetections(frame)
+        frame1 = cv2.resize(frameWithDetections, self.camImgShape)
+        # frameResized2 = cv2.resize(self.imgManager.detector.croppedFrame, self.camImgShape)
 
-        if self.btnViewGatilhos.isChecked():
-            self.areaPainter.paintAreasMainImg(frameResized)
+        if self.checkboxViewGatilhos.isChecked():
+            frame1 = self.areaPainter.paintAreasMainImg(frame1)
 
-        width, height = self.camImgShape
+        height, width, _ = frame1.shape
         bytesPerLine = 3 * width
-        self.camImgQImage = QImage(frameResized.data, width, height, bytesPerLine, QImage.Format_RGB888).rgbSwapped()
-        self.camImgPixmap = QPixmap(self.camImgQImage)
-        self.camImg.setPixmap(self.camImgPixmap)
+        camImgQImage = QImage(frame1, width, height, bytesPerLine, QImage.Format_RGB888).rgbSwapped()
+        camImg1Pixmap = QPixmap(camImgQImage)
         
-        frameResized2 = np.array(frameResized2, dtype=np.uint8)
-        height, width = frameResized2.shape[:2]
-        bytesPerLine = 3 * width
-        self.camImgQImage = QImage(frameResized2, width, height, bytesPerLine, QImage.Format_RGB888).rgbSwapped()
-        self.camImgPixmap = QPixmap(self.camImgQImage)
-        self.camImg2.setPixmap(self.camImgPixmap)
+        # frame2 = self.imgManager.detector.croppedFrame
+        # frame2 = np.array(frame2, dtype=np.uint8)
+        # height, width, _ = frame2.shape
+        # bytesPerLine = 3 * width
+        # camImgQImage = QImage(frame2, width, height, bytesPerLine, QImage.Format_RGB888).rgbSwapped()
+        # camImg2Pixmap = QPixmap(camImgQImage)
 
-    def updateGatilhoState(self, gatilho: gatilhos.Gatilho, state):
+        self.setImagePixmapSignal.emit(self.camImgs[0], camImg1Pixmap)
+
+    def setImagePixmap(self, img, pixmap):
+        img.setPixmap(pixmap)
+
+    def updateGatilhoState(self, gatilho: gatilhos.Trigger, state):
         if gatilho.widget is not None:
             gatilho.widget.setStyleSheet(css.gatilhoAcionado if state else css.gatilhoPadrao)
 
@@ -109,10 +141,6 @@ class GUI(QWidget):
         elif e.key() == Qt.Key_Q:
             self.close()
 
-    # def closeEvent(self, e):
-        # self.imgManager.terminateDetectors() # Se for usado multiprocessing
-        # pass
-
     def updateClientStatus(self, status):
         if status:
             self.lClientConnectedValue.setText('Connected')
@@ -122,7 +150,7 @@ class GUI(QWidget):
             self.lClientConnectedValue.setStyleSheet(css.textRed)
 
     def openGatilhosWindow(self):
-        self.gatilhosWindow = GatilhosWindow()
+        self.gatilhosWindow = TriggersWindow()
     
     def openDrawAreaWindow(self):
         self.drawAreaWindow = AddTriggerWindow()

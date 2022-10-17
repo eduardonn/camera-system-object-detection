@@ -1,39 +1,39 @@
 import os
-import sys
 import cv2 as cv
-from PyQt5.QtWidgets import QApplication, QWidget
+from PyQt5.QtWidgets import QWidget
 from PyQt5.QtGui import QPixmap, QImage, QIcon, QFont
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, pyqtSignal
 import gatilhos
 import layout
+import css
 from image_manager import ImageManager
 from area_painter import AreaPainter
 
 class AddTriggerWindow(QWidget):
+    setImageSignal = pyqtSignal(QPixmap)
+
     def __init__(self, gatilhosWindow):
         super().__init__()
         self.gatilhosWindow = gatilhosWindow
+        self.setImageSignal.connect(lambda pixmap: self.camImg.setPixmap(pixmap))
         
-        self.setGeometry(200, 50, 700, 440)
-        self.setWindowTitle('Adicionar Gatilho')
-        self.setFont(QFont("Times", 10))
         filePath = __file__[:-len(os.path.basename(__file__))]
         self.setWindowIcon(QIcon(filePath + '/Assets/GatilhosIcone.png'))
-        # self.setStyleSheet("background-color: lightgrey")
-
         self.bDrawing = False
 
         layout.addTriggerWindowLayout(self)
 
-        h, w = ImageManager.frame.shape[:2]
-        self.scaleFactor = .4
-        self.camImgShape = (int(w * self.scaleFactor), int(h * self.scaleFactor))
+        h, w = ImageManager.frameResolution
+        initialHeight = 500
+        aspectRatio = float(w) / float(h)
+        initialWidth = int(initialHeight * aspectRatio)
+        self.camImgShape = (initialWidth, initialHeight)
+
         self.camImg.setMaximumSize(self.camImgShape[0], self.camImgShape[1])
 
         self.areaPainter = AreaPainter()
-        # self.areaPainter = AreaPainter((int(h * self.scaleFactor), int(w * self.scaleFactor), 3))
 
-        ImageManager.updateFrameEvent.append(self.updateFrame)
+        ImageManager.onUpdateFrame.append(self.updateFrame)
 
     def keyPressEvent(self, e):
         if e.key() == Qt.Key_Q:
@@ -55,16 +55,20 @@ class AddTriggerWindow(QWidget):
             self.bDrawing = False
             self.areaPainter.saveArea()
 
+    def closeEvent(self, e):
+        ImageManager.onUpdateFrame.remove(self.updateFrame)
+
     def updateFrame(self, frame):
-        h, w = ImageManager.frame.shape[:2]
-        frameResized = cv.resize(frame, (int(w * self.scaleFactor), int(h * self.scaleFactor)))
+        # h, w = ImageManager.frame.shape[:2]
+        frameResized = cv.resize(frame, self.camImgShape)
         self.areaPainter.paintAreasAddGatilho(frameResized)
 
         height, width, _ = frameResized.shape
         bytesPerLine = 3 * width
-        qImg = QImage(frameResized.data, width, height, bytesPerLine, QImage.Format_RGB888).rgbSwapped()
+        qImg = QImage(frameResized, width, height, bytesPerLine, QImage.Format_RGB888).rgbSwapped()
         image = QPixmap(qImg)
-        self.camImg.setPixmap(image)
+
+        self.setImageSignal.emit(image)
 
     def salvarGatilhoESair(self):
         try:
@@ -81,16 +85,11 @@ class AddTriggerWindow(QWidget):
             print("Não há áreas desenhadas")
             return
 
-        h, w = ImageManager.frame.shape[:2]
-        h *=  self.scaleFactor
-        w *=  self.scaleFactor
-        print('h, w', h, w, '| type:', type(w))
-
         # Normaliza areas
-        areaStartX = self.areaPainter.areas[0][0][0] / w
-        areaStartY = self.areaPainter.areas[0][0][1] / h
-        areaEndX = self.areaPainter.areas[0][1][0] / w
-        areaEndY = self.areaPainter.areas[0][1][1] / h
+        areaStartX = self.areaPainter.areas[0][0][0] / self.camImgShape[0]
+        areaStartY = self.areaPainter.areas[0][0][1] / self.camImgShape[1]
+        areaEndX = self.areaPainter.areas[0][1][0] / self.camImgShape[0]
+        areaEndY = self.areaPainter.areas[0][1][1] / self.camImgShape[1]
 
         gatilhos.createGatilho(
             self.nomeGatilho.text(),

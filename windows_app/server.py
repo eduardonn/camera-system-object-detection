@@ -3,11 +3,12 @@ from math import ceil
 import socket
 import cv2, base64
 import os, time, json, datetime
-from threading import Thread
+# from threading import Thread
 import keyboard
 from image_manager import ImageManager
+from PyQt5.QtCore import QThread, pyqtSignal
 
-class ServerConnection(Thread):
+class ServerConnection(QThread):
     CHECK_CONNECTION_MSG_SEND = 'connected?'
     CHECK_CONNECTION_MSG_RECEIVED = 'connected'
     MSG_REQUEST_VIDEO = 'send-video'
@@ -15,12 +16,12 @@ class ServerConnection(Thread):
     FRAGMENT_SIZE = 1000
     IMAGE_PORT = 4444
     NOTIFICATION_PORT = 4445
+    onClientUpdate = pyqtSignal(bool)
 
     def __init__(self, onClientUpdate):
         super(ServerConnection, self).__init__()
-        self.setDaemon(True)
         self.serverIP = '0.0.0.0'
-        self.onClientUpdate = onClientUpdate
+        self.onClientUpdate.connect(onClientUpdate)
         self.triggerQueue = []
         # self.serverIP = '127.0.0.1'
         # self.serverIP = '192.168.0.9'
@@ -40,15 +41,15 @@ class ServerConnection(Thread):
         self.aspectRatio = 1080.0 / 1920.0
         self.newImgSize = 500
 
+    def run(self):
         self.ImageSocket = self.createTCPSocket((self.serverIP, self.IMAGE_PORT))
         self.NotificationSocket = self.createTCPSocket((self.serverIP, self.NOTIFICATION_PORT))
         self.NotificationSocket.listen(1)
         print("LISTENING AT:", (self.serverIP, self.NOTIFICATION_PORT))
 
-    def run(self):
         while True:
             print('[Notifications] Waiting connection')
-            self.onClientUpdate(False)
+            self.onClientUpdate.emit(False)
             self.notifConn, address = self.NotificationSocket.accept()
             print('[Notifications] GOT CONNECTION FROM:', address)
             self.queryTriggerEvents()
@@ -66,12 +67,11 @@ class ServerConnection(Thread):
             print('msg =', msg)
             if (msg.startswith(self.CHECK_CONNECTION_MSG_RECEIVED)
                 or msg.startswith(self.MSG_REQUEST_VIDEO)):
-                self.onClientUpdate(True)
+                self.onClientUpdate.emit(True)
                 self.checkConnection()
             else:
                 self.stopSendingVideo()
                 continue
-
 
     def checkConnection(self):
         while True:
@@ -95,19 +95,18 @@ class ServerConnection(Thread):
             time.sleep(3)
 
     def startSendingVideo(self):
-        # Connect socket to client
         self.ImageSocket.listen(1)
         print('[Image] Waiting connection')
         self.imageConn, address = self.ImageSocket.accept()
         print('[Image] GOT CONNECTION FROM:', address)
 
         self.bSendVideo = True
-        ImageManager.updateFrameEvent.append(self.sendFrame)
+        ImageManager.onUpdateFrame.append(self.sendFrame)
 
     def stopSendingVideo(self):
         self.bSendVideo = False
         try:
-            ImageManager.updateFrameEvent.remove(self.sendFrame)
+            ImageManager.onUpdateFrame.remove(self.sendFrame)
         except:
             print('exception while removing self.sendFrame')
 
@@ -124,6 +123,7 @@ class ServerConnection(Thread):
 
         # MESSAGE FORMAT: [----: 4 bytes][framesize: 4 bytes][imageFragment: (FRAGMENT_SIZE) bytes]
         data = (b'----'
+                # + bytes(ctypes.c_uint32(frameID))
                 + bytes(ctypes.c_uint32(frameSize))
                 + bytes(frame[:self.FRAGMENT_SIZE]))
 

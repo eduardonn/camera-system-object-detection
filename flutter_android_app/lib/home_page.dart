@@ -128,35 +128,29 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
               // ),
             ],
           ),
-          // Spacer(),
-          Builder(
-            builder: (_) {
-              if (_gridOn) {
-                return OrientationBuilder(
-                  builder: (context, orientation) {
-                    if (orientation == Orientation.portrait) {
-                      return Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          _imageWidget(),
-                          _imageWidget(),
-                        ],
-                      );
-                    } else {
-                      return Row(
-                        children: [
-                          _imageWidget(),
-                          _imageWidget(),
-                        ],
-                      );
-                    }
-                  },
-                );
-              } else {
-                return _imageWidget();
-              }
-            },
-          ),
+          if (_gridOn)
+            OrientationBuilder(
+              builder: (context, orientation) {
+                if (orientation == Orientation.portrait) {
+                  return Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      _imageWidget(),
+                      _imageWidget(),
+                    ],
+                  );
+                } else {
+                  return Row(
+                    children: [
+                      _imageWidget(),
+                      _imageWidget(),
+                    ],
+                  );
+                }
+              },
+            )
+          else
+            _imageWidget(),
           // Card(
           //   child: Text(
           //     // controller: logTextController,
@@ -286,7 +280,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
 
   Widget _imageWidget() {
     return GestureDetector(
-      onDoubleTap: () => setState(() => _gridOn = !_gridOn),
+      onTap: () => setState(() => _gridOn = !_gridOn),
       child: imageConnection.frame ??
           AspectRatio(
             aspectRatio: 16 / 9,

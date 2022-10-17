@@ -10,23 +10,24 @@ Gatilhos
 import numpy as np
 import time
 import sip
+import cv2
 from datetime import datetime
 from PyQt5.QtCore import QThread, pyqtSignal
 import database as db
 import css
 import layout
 
-listaGatilhos = []
+triggerList = []
 
-class Gatilho:
-    gatilhosWindow = None
+class Trigger:
+    triggersWindow = None
 
     def __init__(
             self,
             id,
             nome,
-            horarioInicial,
-            horarioFinal,
+            initialTime,
+            finalTime,
             tempoPermanencia,
             acao,
             areaStartX,
@@ -35,8 +36,8 @@ class Gatilho:
             areaEndY):
         self.id = id
         self.nome = nome
-        self.horarioInicial = horarioInicial
-        self.horarioFinal = horarioFinal
+        self.initialTime = initialTime
+        self.finalTime = finalTime
         self.tempoPermanencia = tempoPermanencia
         self.acao = acao
         self.areaStartX = areaStartX
@@ -56,8 +57,8 @@ class Gatilho:
         print("removendo id:", self.id)
 
         db.deleteGatilho(self.id)
-        Gatilho.gatilhosWindow.vBoxGatilhos.removeWidget(self.widget)
-        listaGatilhos.remove(self)
+        self.triggersWindow.vBoxGatilhos.removeWidget(self.widget)
+        triggerList.remove(self)
         sip.delete(self.widget)
         self.widget = None
         db.printDB()
@@ -67,7 +68,7 @@ class Gatilho:
         self.acionado = False
 
         if self.widget is not None:
-            self.widget.setStyleSheet(css.gatilhoPadrao)
+            self.triggersWindow.resetTriggerUI.emit(self)
 
         if self.lTempoPermaneceu is not None:
             self.lTempoPermaneceu.setText(str(round(self.tempoPermaneceu, 3)))
@@ -76,57 +77,57 @@ class Gatilho:
         print('GATILHO:',
                 self.id,
                 self.nome,
-                self.horarioInicial,
-                self.horarioFinal,
+                self.initialTime,
+                self.finalTime,
                 self.tempoPermanencia,
                 self.acao,
                 self.areaStartX,
                 self.areaStartY,
                 self.areaEndX,
                 self.areaEndY)
-    
+
 class UpdateGatilhosThread(QThread):
-    changeGatilhoStateSignal = pyqtSignal(Gatilho, bool) # Necessário pois mudanças na UI devem ocorrer na thread principal
+    '''Atualiza gatilhos a cada THREAD_TIME_SLEEP segundos'''
+    changeGatilhoStateSignal = pyqtSignal(Trigger, bool) # Necessário pois mudanças na UI devem ocorrer na thread principal
 
     def run(self):
-        '''Atualiza gatilhos a cada THREAD_TIME_SLEEP segundos'''
         
         THREAD_TIME_SLEEP = 0.1 # Tempo (em segundos) que a thread irá dormir e incrementar o tempo que detecções permaneceram
-        TIME_INC_LAST_DETECTION = 0.5 # Continuar incrementando o tempo que permaneceu até esse tempo (em segundos)
-        TIME_LIMIT_TO_RESET = 10 # Se passar esse tempo (em segundos), o gatilho resetará
+        MAX_TIME_INC_LAST_DETECTION = 0.5 # Continuar incrementando o tempo que permaneceu até esse tempo (em segundos)
+        TIME_LIMIT_TO_RESET = 10 # Se passar esse tempo (em segundos) sem detecção no gatilho, ele resetará
 
-        while(True):
-            for gatilho in listaGatilhos:
-                if not gatilho.bDetectionInside: continue
-                timeSinceLastDetection = time.time() - gatilho.detectionLastTime
-                if timeSinceLastDetection > TIME_INC_LAST_DETECTION: continue
+        while True:
+            for trigger in triggerList:
+                timeSinceLastDetection = time.time() - trigger.detectionLastTime
 
-                gatilho.tempoPermaneceu += THREAD_TIME_SLEEP
+                if timeSinceLastDetection > MAX_TIME_INC_LAST_DETECTION:
+                    if timeSinceLastDetection > TIME_LIMIT_TO_RESET:
+                        trigger.reset()
+                    continue
+                if not trigger.bDetectionInside: continue
 
-                if gatilho.lTempoPermaneceu is not None:
-                    gatilho.lTempoPermaneceu.setText(str(round(gatilho.tempoPermaneceu, 3)))
+                trigger.tempoPermaneceu += timeSinceLastDetection
+
+                if trigger.lTempoPermaneceu is not None:
+                    trigger.lTempoPermaneceu.setText(str(round(trigger.tempoPermaneceu, 3)))
                 
-                if gatilho.acionado: continue
-                if timeSinceLastDetection > TIME_LIMIT_TO_RESET:
-                    gatilho.reset()
+                if trigger.acionado: continue
 
-                # Testa se disparou
-                if gatilho.tempoPermaneceu > gatilho.tempoPermanencia and not gatilho.acionado:
-                    gatilho.acionado = True
-                    print(f'GATILHO [{gatilho.nome}] DISPAROU')
+                if trigger.tempoPermaneceu > trigger.tempoPermanencia and not trigger.acionado:
+                    trigger.acionado = True
+                    print(f'GATILHO [{trigger.nome}] DISPAROU')
 
-                    self.changeGatilhoStateSignal.emit(gatilho, True)
+                    self.changeGatilhoStateSignal.emit(trigger, True)
 
             time.sleep(THREAD_TIME_SLEEP)
 
 def initGatilhos(updateGatilhoState):
-    global listaGatilhos
-    listaGatilhos.clear()
+    global triggerList
+    triggerList.clear()
 
     for gatilho in db.selectGatilhos():
-        gatilhoClass = Gatilho(*gatilho)
-        listaGatilhos.append(gatilhoClass)
-        # layout.addGatilho(gatilhosWindow, gatilhoClass)
+        gatilhoClass = Trigger(*gatilho)
+        triggerList.append(gatilhoClass)
 
     thread = UpdateGatilhosThread()
     thread.changeGatilhoStateSignal.connect(updateGatilhoState)
@@ -135,10 +136,10 @@ def initGatilhos(updateGatilhoState):
     return thread
 
 def createGatilho(*args):
-    gatilho = Gatilho(-1, *args)
+    gatilho = Trigger(-1, *args)
     db.createGatilho(gatilho)
-    layout.addGatilho(Gatilho.gatilhosWindow, gatilho)
-    listaGatilhos.append(gatilho)
+    layout.addTrigger(Trigger.triggersWindow, gatilho)
+    triggerList.append(gatilho)
 
 def updateGatilhosDetection(detections):
     '''Deve ser chamada para atualizar gatilhos após uma detecção'''
@@ -153,22 +154,22 @@ def updateGatilhosDetection(detections):
 
             timeNow = datetime.now()
             
-            global listaGatilhos
-            for gatilho in listaGatilhos:
-                if testHorario(gatilho, timeNow) and testBoundingBox(gatilho, *boundingBox):
-                    gatilho.detectionLastTime = time.time()
-                    gatilho.bDetectionInside = True
+            global triggerList
+            for trigger in triggerList:
+                if testHorario(trigger, timeNow) and testBoundingBox(trigger, *boundingBox):
+                    trigger.detectionLastTime = time.time()
+                    trigger.bDetectionInside = True
                 else:
-                    gatilho.bDetectionInside = False
+                    trigger.bDetectionInside = False
         if idx == 15: break
 
-def testHorario(gatilho: Gatilho, timeNow: datetime) -> bool:
+def testHorario(trigger: Trigger, timeNow: datetime) -> bool:
     '''Testa se o horário de agora está dentro do horário do gatilho'''
 
-    iniHour = int(gatilho.horarioInicial[:2])
-    iniMinute = int(gatilho.horarioInicial[3:])
-    finalHour = int(gatilho.horarioFinal[:2])
-    finalMinute = int(gatilho.horarioFinal[3:])
+    iniHour = int(trigger.initialTime[:2])
+    iniMinute = int(trigger.initialTime[3:])
+    finalHour = int(trigger.finalTime[:2])
+    finalMinute = int(trigger.finalTime[3:])
 
     if iniHour < timeNow.hour and finalHour > timeNow.hour:
         return True
@@ -179,13 +180,13 @@ def testHorario(gatilho: Gatilho, timeNow: datetime) -> bool:
 
     return False
 
-def testBoundingBox(gatilho: Gatilho, boxStartX: float, boxStartY: float, boxEndX: float, boxEndY: float) -> bool:
+def testBoundingBox(trigger: Trigger, boxStartX: float, boxStartY: float, boxEndX: float, boxEndY: float) -> bool:
     '''Testa se a detecção está dentro da área do gatilho'''
 
-    return (boxStartX >= gatilho.areaStartX
-            and boxEndX <= gatilho.areaEndX
-            and boxStartY >= gatilho.areaStartY
-            and boxEndY <= gatilho.areaEndY)
+    return (boxStartX >= trigger.areaStartX
+            and boxEndX <= trigger.areaEndX
+            and boxStartY >= trigger.areaStartY
+            and boxEndY <= trigger.areaEndY)
 
 # def testBoxes(startX, startY, endX, endY, gatilhoStartX, gatilhoStartY, gatilhoEndX, gatilhoEndY):
 #     if (startX >= gatilho.areaStartX) & (endX <= gatilho.areaEndX) & (startY >= gatilho.areaStartY) & (endY <= gatilho.areaEndY):

@@ -3,13 +3,17 @@ import os
 import layout
 from PyQt5.QtWidgets import QApplication, QWidget
 from PyQt5.QtGui import QIcon, QFont
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, pyqtSignal
 from add_trigger_window import AddTriggerWindow
 import gatilhos
+import css
 
-class GatilhosWindow(QWidget):
+class TriggersWindow(QWidget):
+    resetTriggerUI = pyqtSignal(gatilhos.Trigger)
+
     def __init__(self):
         super().__init__()
+        self.resetTriggerUI.connect(lambda trigger: trigger.widget.setStyleSheet(css.gatilhoPadrao))
         
         self.setGeometry(300, 200, 700, 440)
         self.setWindowTitle('Gatilhos')
@@ -18,10 +22,10 @@ class GatilhosWindow(QWidget):
 
         layout.gatilhosWindowLayout(self)
 
-        gatilhos.Gatilho.gatilhosWindow = self # Cria uma variável estática referenciando esta instância
+        gatilhos.Trigger.triggersWindow = self # Cria uma variável estática referenciando esta instância
         
-        for gatilho in gatilhos.listaGatilhos:
-            layout.addGatilho(self, gatilho)
+        for gatilho in gatilhos.triggerList:
+            layout.addTrigger(self, gatilho)
         # self.openDrawAreaWindow()
 
     def keyPressEvent(self, e):
@@ -38,5 +42,5 @@ class GatilhosWindow(QWidget):
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
-    ex = GatilhosWindow()
+    ex = TriggersWindow()
     sys.exit(app.exec_())
