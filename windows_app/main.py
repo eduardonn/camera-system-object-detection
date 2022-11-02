@@ -1,22 +1,15 @@
-import sys
-import os
-import cv2
-import time
-import numpy as np
+import sys, os, cv2, time
 from PyQt5.QtWidgets import QApplication, QWidget
 from PyQt5.QtGui import QPixmap, QImage, QIcon
 from PyQt5.QtCore import Qt, pyqtSignal
 from add_trigger_window import AddTriggerWindow
 from image_manager import ImageManager
 from gatilhos_window import TriggersWindow
-from detection_tester import DetectionTester
 from area_painter import AreaPainter
 from server import ServerConnection
 from image_widget import ImageWidget
 from detector import SSDDetector
-import layout
-import gatilhos
-import css
+import layout, gatilhos, css
 
 class GUI(QWidget):
     setImagePixmapSignal = pyqtSignal(ImageWidget, QPixmap)
@@ -27,9 +20,9 @@ class GUI(QWidget):
         self.filePath = __file__[:-len(os.path.basename(__file__))]
         self.bVisualizarAreas = True
         self.gatilhosThread = gatilhos.initGatilhos(self.updateGatilhoState)
-        self.imgManager = ImageManager()
-        self.detector = SSDDetector(gatilhos.updateGatilhosDetection)
+        self.detector = SSDDetector(gatilhos.updateGatilhosAfterDetection)
         self.detector.start()
+        self.imgManager = ImageManager(self.detector.benchmark.printStatistics)
         self.imgManager.onUpdateFrame.append(self.detector.setFrame)
         self.initMainWindow()
         self.areaPainter = AreaPainter()
@@ -75,6 +68,16 @@ class GUI(QWidget):
 
         self.camImgs[0].setMaximumSize(self.camImgShape[0], self.camImgShape[1])
         self.camImgs[1].setMaximumSize(self.camImgShape[0], self.camImgShape[1])
+
+    def onCheckboxAjustarBlobSizeClick(self, value):
+        self.imgManager.setShowPersonTester(value)
+        self.detector.setOnlyDetectCroppedFrame(not value)
+        self.personTesterSizeSlider.setVisible(value)
+        self.lPersonSize.setVisible(value)
+
+    def sliderPersonTesterSize(self, value):
+        self.lPersonSize.setText(str(value))
+        self.imgManager.setPersonTesterSize(value)
 
     def handleImageClick(self, imgToFocus):
         if self.focusedImage is None:
@@ -135,9 +138,11 @@ class GUI(QWidget):
 
     def keyPressEvent(self, e):
         if e.key() == Qt.Key_2:
-            self.server.sendNotification()
+            self.server.sendNotification(gatilhos.triggerList[0])
         elif e.key() == Qt.Key_3:
-            self.server.sendAlarm()
+            self.server.sendAlarm(gatilhos.triggerList[0])
+        elif e.key() == Qt.Key_4:
+            self.imgManager.togglePauseVideo()
         elif e.key() == Qt.Key_Q:
             self.close()
 
@@ -150,7 +155,7 @@ class GUI(QWidget):
             self.lClientConnectedValue.setStyleSheet(css.textRed)
 
     def openGatilhosWindow(self):
-        self.gatilhosWindow = TriggersWindow()
+        self.gatilhosWindow = TriggersWindow(self)
     
     def openDrawAreaWindow(self):
         self.drawAreaWindow = AddTriggerWindow()

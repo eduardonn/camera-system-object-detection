@@ -10,11 +10,9 @@ Gatilhos
 import numpy as np
 import time
 import sip
-import cv2
 from datetime import datetime
 from PyQt5.QtCore import QThread, pyqtSignal
 import database as db
-import css
 import layout
 
 triggerList = []
@@ -86,7 +84,7 @@ class Trigger:
                 self.areaEndX,
                 self.areaEndY)
 
-class UpdateGatilhosThread(QThread):
+class UpdateGatilhosPeriodicallyThread(QThread):
     '''Atualiza gatilhos a cada THREAD_TIME_SLEEP segundos'''
     changeGatilhoStateSignal = pyqtSignal(Trigger, bool) # Necessário pois mudanças na UI devem ocorrer na thread principal
 
@@ -129,7 +127,7 @@ def initGatilhos(updateGatilhoState):
         gatilhoClass = Trigger(*gatilho)
         triggerList.append(gatilhoClass)
 
-    thread = UpdateGatilhosThread()
+    thread = UpdateGatilhosPeriodicallyThread()
     thread.changeGatilhoStateSignal.connect(updateGatilhoState)
     thread.start()
 
@@ -141,7 +139,7 @@ def createGatilho(*args):
     layout.addTrigger(Trigger.triggersWindow, gatilho)
     triggerList.append(gatilho)
 
-def updateGatilhosDetection(detections):
+def updateGatilhosAfterDetection(detections):
     '''Deve ser chamada para atualizar gatilhos após uma detecção'''
 
     for i in np.arange(0, detections.shape[2]):

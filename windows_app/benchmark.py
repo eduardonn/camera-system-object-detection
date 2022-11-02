@@ -1,11 +1,12 @@
-import time
-import math
+import time, math
+import numpy as np
 
 class Benchmark:
     def __init__(self, name):
         self.name = name
+        self.executionInitTime = time.time()
         self.initTime = None
-        self.listTimes = []
+        self.detectionTimeList = np.ndarray((0,))
 
     def startTimer(self):
         self.initTime = time.time()
@@ -16,30 +17,21 @@ class Benchmark:
 
         timeElapsed = time.time() - self.initTime
         
-        self.listTimes.append(timeElapsed)
+        self.detectionTimeList = np.append(self.detectionTimeList, timeElapsed)
         self.initTime = None
 
         if bPrint:
-            print(f'BENCHMARK [{self.name}] | Time elapsed: {round(timeElapsed, 5)}s')
+            print(f'BENCHMARK [{self.name}] | Time elapsed: {round(timeElapsed, 3)}s')
 
         return timeElapsed
 
-    # def __del__(self):
-    #     self.print()
-
-    def print(self):
-        print('deleted')
-        if len(self.listTimes) == 0: return
-
-        sum = 0
-        maxValue = 0
-        minValue = math.inf
-        for val in self.listTimes:
-            maxValue = val if val > maxValue else maxValue
-            minValue = val if val < minValue else minValue
-            sum += val
+    def printStatistics(self):
+        if len(self.detectionTimeList) == 0:
+            print('[BENCHMARK] Detection list is empty')
+            return
 
         print(f'----------BENCHMARK [{self.name}]----------')
-        print(f'Average time: {round(sum / len(self.listTimes), 5)}s')
-        print(f'Max time: {round(maxValue, 5)}s')
-        print(f'Min time: {round(minValue, 5)}s')
+        print(f'Average time:\t{round(self.detectionTimeList.mean(), 3)}s')
+        print(f'Max time:\t{round(self.detectionTimeList.max(), 3)}s')
+        print(f'Min time:\t{round(self.detectionTimeList.min(), 3)}s')
+        print(f'Total execution time:\t{round(time.time() - self.executionInitTime, 3)}s')

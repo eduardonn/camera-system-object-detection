@@ -1,4 +1,6 @@
 recordings
+gatilho_tester.py
+utils.py
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

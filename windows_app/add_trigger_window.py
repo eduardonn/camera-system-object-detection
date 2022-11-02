@@ -102,6 +102,6 @@ class AddTriggerWindow(QWidget):
             areaEndX,
             areaEndY)
 
-        ImageManager.instance.detector.updateDetectionArea()
+        self.gatilhosWindow.mainWindow.detector.updateDetectionArea()
 
         self.close()

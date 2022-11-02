@@ -1,5 +1,5 @@
 import os
-from PyQt5.QtWidgets import QLabel, QPushButton, QVBoxLayout, QHBoxLayout, QSizePolicy
+from PyQt5.QtWidgets import QLabel, QPushButton, QVBoxLayout, QHBoxLayout, QSizePolicy, QSlider
 from PyQt5.QtWidgets import QWidget, QComboBox, QTimeEdit, QLineEdit, QScrollArea, QCheckBox, QLayout
 from PyQt5.QtGui import QCursor, QIcon, QIntValidator
 from PyQt5.QtCore import Qt
@@ -17,18 +17,15 @@ def initMainWindowLayout(UI):
     # Button gatilhos
     btnGatilhos = QPushButton("Gatilhos")
     btnGatilhos.setStyleSheet(css.btnStyle)
+    btnGatilhos.setMaximumWidth(200)
     btnGatilhos.clicked.connect(UI.openGatilhosWindow)
-
-    # Button
-    # btnBlobSize = QPushButton()
-    # btnBlobSize.setContentsMargins(0, 0, 0 ,0)
-    # btnBlobSize.setStyleSheet(css.btnTriggerStyle + css.imageSettingButton)
-    # btnBlobSize.setIcon(QIcon(filePath + '/Assets/blob_size_icon.png'))
-    # btnBlobSize.clicked.connect(lambda: print('btn pressed'))
 
     # CheckBox visualizar detecções
     UI.checkboxViewGatilhos = QCheckBox('Visualizar Gatilhos')
     UI.checkboxViewGatilhos.setStyleSheet(css.checkBoxStyle)
+    checkboxBlobSize = QCheckBox('Ajustar Blob Size')
+    checkboxBlobSize.setStyleSheet(css.checkBoxStyle)
+    checkboxBlobSize.clicked.connect(UI.onCheckboxAjustarBlobSizeClick)
     # UI.checkboxViewGatilhos.setChecked(True)
 
     # Image
@@ -40,19 +37,26 @@ def initMainWindowLayout(UI):
     UI.camImgs.append(ImageWidget(UI.handleImageClick))
     UI.camImgs[1].setStyleSheet(css.imageStyle)
     # UI.camImgs[1].setScaledContents(True)
-    # # UI.camImgs[1].setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Ignored)
+    # UI.camImgs[1].setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Ignored)
 
     # Labels
     lClientConnected = QLabel('Cliente: ')
     UI.lClientConnectedValue = QLabel('Disconnected')
     UI.lClientConnectedValue.setStyleSheet(css.textRed)
-    # UI.lLogPanel = QLabel('Log')
     lImg1BlobSize = QLabel('Blob Size Imagem 1:')
     lImg2BlobSize = QLabel('Blob Size Imagem 2:')
+    lSettings = QLabel('---Settings---')
 
-    # Painel de Log
-    # UI.logPanel = QTextEdit()
-    # utils.logPanel = UI.logPanel
+    # Slider
+    UI.lPersonSize = QLabel('150')
+    UI.lPersonSize.hide()
+    UI.personTesterSizeSlider = QSlider(Qt.Horizontal)
+    UI.personTesterSizeSlider.setRange(10, 460)
+    UI.personTesterSizeSlider.setValue(150)
+    UI.personTesterSizeSlider.valueChanged.connect(UI.sliderPersonTesterSize)
+    UI.personTesterSizeSlider.setPageStep(50)
+    UI.personTesterSizeSlider.setTickInterval(10)
+    UI.personTesterSizeSlider.hide()
 
     # LineEdit
     UI.inputBlobSize = []
@@ -61,8 +65,7 @@ def initMainWindowLayout(UI):
         UI.inputBlobSize[i].setMaximumSize(45, 28)
         UI.inputBlobSize[i].setStyleSheet(css.blobSizeTextEdit)
         UI.inputBlobSize[i].setText(str(UI.detector.blobSizes[i]))
-        UI.inputBlobSize[i].setValidator(QIntValidator(100, 1200))
-        # UI.inputBlobSize[i].textChanged.connect(lambda value: UI.imgManager.detector.setBlobSize(value, i))
+        UI.inputBlobSize[i].setValidator(QIntValidator(40, 2500))
     UI.inputBlobSize[0].textChanged.connect(lambda value: UI.detector.setBlobSize(value, 0))
     UI.inputBlobSize[1].textChanged.connect(lambda value: UI.detector.setBlobSize(value, 1))
 
@@ -70,44 +73,43 @@ def initMainWindowLayout(UI):
     vBoxMain = QVBoxLayout()
     vBoxMain.setSizeConstraint(QLayout.SetMinimumSize)
     hBoxTop = QHBoxLayout()
+    hBoxTop.setAlignment(Qt.AlignTop)
     hBoxBottom = QHBoxLayout()
     vBoxLogPanel = QVBoxLayout()
     vBoxImages = QVBoxLayout()
+    vBoxImages.setAlignment(Qt.AlignCenter)
+    vBoxSettings = QVBoxLayout()
+    vBoxSettings.setAlignment(Qt.AlignTop)
+    vBoxSettings.setSpacing(10)
+    vBoxImages.addWidget(UI.camImgs[0])
+    vBoxImages.addWidget(UI.camImgs[1])
     hBoxImg1BlobSize = QHBoxLayout()
     hBoxImg2BlobSize = QHBoxLayout()
-    # vBoxImage1 = QVBoxLayout(UI.camImgs[0])
+    hBoxBlobSizeAjuste = QHBoxLayout()
     hBoxClientInfo = QHBoxLayout()
-    # hBoxTop.setContentsMargins(0, 0, 0, 0)
-    hBoxTop.setAlignment(Qt.AlignTop)
     hBoxTop.addWidget(btnGatilhos)
-    hBoxTop.addWidget(UI.checkboxViewGatilhos)
+    hBoxImg1BlobSize.addWidget(lImg1BlobSize)
+    hBoxImg1BlobSize.addWidget(UI.inputBlobSize[0], alignment=Qt.AlignLeft)
+    hBoxImg2BlobSize.addWidget(lImg2BlobSize)
+    hBoxImg2BlobSize.addWidget(UI.inputBlobSize[1], alignment=Qt.AlignLeft)
+    vBoxSettings.addWidget(lSettings, alignment=Qt.AlignTop | Qt.AlignCenter)
+    vBoxSettings.addWidget(UI.checkboxViewGatilhos)
+    vBoxSettings.addWidget(checkboxBlobSize)
+    hBoxBlobSizeAjuste.addWidget(UI.personTesterSizeSlider)
+    hBoxBlobSizeAjuste.addWidget(UI.lPersonSize)
+    vBoxSettings.addLayout(hBoxBlobSizeAjuste)
+    vBoxSettings.addLayout(hBoxImg1BlobSize)
+    vBoxSettings.addLayout(hBoxImg2BlobSize)
     hBoxClientInfo.addWidget(lClientConnected)
     hBoxClientInfo.addWidget(UI.lClientConnectedValue)
-    # UI.vBox.setSpacing(0)
-    # UI.hBox.setAlignment(Qt.AlignLeft)
     hBoxClientInfo.setAlignment(Qt.AlignRight)
-    hBoxImg1BlobSize.addWidget(lImg1BlobSize, alignment=Qt.AlignRight)
-    hBoxImg1BlobSize.addWidget(UI.inputBlobSize[0], alignment=Qt.AlignLeft)
-    hBoxImg2BlobSize.addWidget(lImg2BlobSize, alignment=Qt.AlignRight)
-    hBoxImg2BlobSize.addWidget(UI.inputBlobSize[1], alignment=Qt.AlignLeft)
-    # vBoxImages.setAlignment(Qt.AlignTop)
-    # vBoxImage1.addWidget(btnBlobSize, alignment=Qt.AlignTop | Qt.AlignRight)
-    # vBoxImage1.addWidget(UI.camImgs[0], alignment=Qt.AlignCenter)
-    # vBoxImages.addWidget(vBoxImage1)
-    vBoxImages.addWidget(UI.camImgs[0], alignment=Qt.AlignCenter)
-    vBoxImages.addWidget(UI.camImgs[1], alignment=Qt.AlignCenter)
-    # hBoxBottom.setAlignment(Qt.AlignCenter)
-    hBoxTop.addLayout(hBoxImg1BlobSize)
-    hBoxTop.addLayout(hBoxImg2BlobSize)
     hBoxTop.addLayout(hBoxClientInfo)
     vBoxMain.addLayout(hBoxTop)
     vBoxMain.addLayout(hBoxBottom)
     vBoxMain.setStretchFactor(hBoxTop, 1)
     vBoxMain.setStretchFactor(hBoxBottom, 100)
     hBoxBottom.addLayout(vBoxImages)
-    # hBoxBottom.addLayout(UI.vBoxLogPanel)
-    # vBoxLogPanel.addWidget(UI.lLogPanel, alignment=Qt.AlignHCenter)
-    # vBoxLogPanel.addWidget(UI.logPanel)
+    hBoxBottom.addLayout(vBoxSettings)
     UI.setLayout(vBoxMain)
 
     UI.show()
@@ -125,9 +127,6 @@ def gatilhosWindowLayout(UI):
     btnVoltar.clicked.connect(UI.close)
     # btnVoltar.setMinimumWidth(100)
     btnVoltar.setStyleSheet(css.btnStyle)
-    # btnLimparBD = QPushButton("Limpar Banco de Dados")
-    # btnLimparBD.clicked.connect(db.limparBD)
-    # btnLimparBD.setMinimumWidth(100)
 
     # Labels
     lTriggersList = QLabel("Lista de Gatilhos")
@@ -144,10 +143,8 @@ def gatilhosWindowLayout(UI):
     scrollArea.setWidgetResizable(True)
 
     vBoxMain.addWidget(btnAdd, alignment=Qt.AlignLeft)
-    # vMainLayout.addWidget(btnLimparBD, alignment=Qt.AlignLeft)
     vBoxMain.addWidget(lTriggersList, alignment=Qt.AlignHCenter)
     vBoxMain.addWidget(scrollArea)
-    # UI.vBoxGatilhos.setAlignment(Qt.AlignTop)
     vBoxMain.addWidget(btnVoltar, alignment=Qt.AlignRight)
 
     listaGatilhos.setLayout(UI.vBoxGatilhos)
@@ -183,7 +180,6 @@ def addTriggerWindowLayout(UI):
     lAcao = QLabel("Ação")
     lAcao.setMaximumHeight(20)
     lAte = QLabel("até")
-    # UI.lAte.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Minimum)
     lAte.setMaximumHeight(20)
     lAte.setMaximumWidth(20)
 

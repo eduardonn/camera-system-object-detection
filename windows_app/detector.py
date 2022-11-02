@@ -3,7 +3,7 @@ import numpy as np
 import time
 import cv2
 import math
-from PyQt5.QtCore import QThread, pyqtSignal
+from PyQt5.QtCore import QThread
 from benchmark import Benchmark
 import gatilhos
 
@@ -17,14 +17,14 @@ class SSDDetector(QThread):
         self.onFrameProcessed = onFrameProcessed # Evento chamado após o término de uma detecção
         self.resizeStartPoint = None
         self.resizeEndPoint = None
+        self.onlyDetectCroppedFrame = True
         self.detectionColor = (0, 0, 200)
         self.confidenceDrawDetection = .5
+        self.detectionAreaSizeMultiplier = 1.
+        self.benchmark = Benchmark('Detector')
         self.CLASSES = ["background", "aeroplane", "bicycle", "bird", "boat", "bottle", "bus",
                         "car", "cat", "chair", "cow", "diningtable", "dog", "horse", "motorbike",
                         "person", "pottedplant", "sheep", "sofa", "train", "tvmonitor"]
-
-        # self.finishDetectionSignal = pyqtSignal(str)
-        # self.finishDetectionSignal.connect(utils.printLog)
 
         # Get root folder
         rootFolder = __file__[:-len(os.path.basename(__file__))]
@@ -38,31 +38,29 @@ class SSDDetector(QThread):
             self.net.setPreferableTarget(cv2.dnn.DNN_TARGET_CUDA)
 
     def run(self):
-        # benchmark = Benchmark('Detector')
-
         while(True):
             if self.bDetect:
-                # benchmark.startTimer()
+                self.benchmark.startTimer()
                 
                 if self.frame is None:
                     self.bDetect = False
                     continue
 
                 if len(gatilhos.triggerList) != 0:
-                    croppedFrame = self.frame[
-                        self.resizeStartPoint[0]:self.resizeEndPoint[0],
-                        self.resizeStartPoint[1]:self.resizeEndPoint[1],
-                        :
-                    ]
-                    detections = self.detect(croppedFrame)
-
-                    self.detections = self.convertCoordsCroppedToOriginal(detections)
+                    if self.onlyDetectCroppedFrame:
+                        croppedFrame = self.frame[
+                            self.resizeStartPoint[0]:self.resizeEndPoint[0],
+                            self.resizeStartPoint[1]:self.resizeEndPoint[1]
+                        ]
+                        detections = self.detect(croppedFrame)
+                        self.detections = self.convertCoordsCroppedToOriginal(detections)
+                    else:
+                        self.detections = self.detect(self.frame)
 
                     # Ao terminar uma detecção, chama função
                     self.onFrameProcessed(self.detections)
-                    # self.finishDetectionSignal.emit(benchmark.stopTimer(bPrint=False))
 
-                # benchmark.stopTimer(True)
+                self.benchmark.stopTimer(bPrint = True)
                 time.sleep(.01)
             else:
                 if self.frame is not None:
@@ -71,7 +69,8 @@ class SSDDetector(QThread):
                 time.sleep(0.5)
 
     def detect(self, frame):
-        blobShape = (int(self.blobSizes[0] * self.aspectRatio), self.blobSizes[0])
+        blobShape = (int(self.blobSizes[0] * self.aspectRatio * self.detectionAreaSizeMultiplier),
+                    int(self.blobSizes[0] * self.detectionAreaSizeMultiplier))
         blob = cv2.dnn.blobFromImage(frame, 1/255.0, blobShape, 127.5)
         self.net.setInput(blob)
         detections = self.net.forward()
@@ -81,6 +80,14 @@ class SSDDetector(QThread):
     def setFrame(self, frame):
         self.frame = frame
 
+    def setOnlyDetectCroppedFrame(self, value):
+        if value:
+            self.updateDetectionArea()
+        else:
+            self.aspectRatio = self.frame.shape[1] / self.frame.shape[0]
+            self.detectionAreaSizeMultiplier = 1.
+        self.onlyDetectCroppedFrame = value
+
     def convertCoordsCroppedToOriginal(self, detections):
         '''
         Convert bounding boxes' normalized coordinates from cropped frame to normal sized frame
@@ -89,7 +96,7 @@ class SSDDetector(QThread):
         frameHeight, frameWidth = self.frame.shape[:2]
         for i in np.arange(0, detections.shape[2]):
             idx = int(detections[0, 0, i, 1])
-            if idx != 15: continue
+            if idx != 15: continue # idx 15 is person
 
             detections[0, 0, i, 3] = (detections[0, 0, i, 3] * croppedFrameWidth + self.resizeStartPoint[1]) / frameWidth
             detections[0, 0, i, 4] = (detections[0, 0, i, 4] * croppedFrameHeight + self.resizeStartPoint[0]) / frameHeight
@@ -97,7 +104,6 @@ class SSDDetector(QThread):
             detections[0, 0, i, 6] = (detections[0, 0, i, 6] * croppedFrameHeight + self.resizeStartPoint[0]) / frameHeight
 
         return detections
-
     
     def updateDetectionArea(self):
         '''
@@ -118,11 +124,17 @@ class SSDDetector(QThread):
             if gatilho.areaEndX > endPoint[1]:
                 endPoint[1] = gatilho.areaEndX
         
-        h, w = self.frame.shape[:2]
+        frameHeight, frameWidth = self.frame.shape[:2]
 
         # Convert normalized (0 - 1) to pixels
-        self.resizeStartPoint = (int(startPoint[0] * h), int(startPoint[1] * w))
-        self.resizeEndPoint = (int(endPoint[0] * h), int(endPoint[1] * w))
+        self.resizeStartPoint = (int(startPoint[0] * frameHeight), int(startPoint[1] * frameWidth))
+        self.resizeEndPoint = (int(endPoint[0] * frameHeight), int(endPoint[1] * frameWidth))
+
+        detectionAreaHeight = self.resizeEndPoint[0] - self.resizeStartPoint[0]
+        # print('detectionAreaHeight', detectionAreaHeight)
+        # print('frameHeight', frameHeight)
+        self.detectionAreaSizeMultiplier = detectionAreaHeight / frameHeight
+        # print('self.detectionAreaSizeMultiplier', self.detectionAreaSizeMultiplier)
 
         self.croppedFrameResolution = (
             self.resizeEndPoint[0] - self.resizeStartPoint[0],

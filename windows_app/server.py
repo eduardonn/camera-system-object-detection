@@ -160,16 +160,12 @@ class ServerConnection(QThread):
     def sendNotification(self, trigger):
         print('sending notification')
         try:
-            # local = 'Estabelecimento'
-            # print('datetime:', datetime.datetime.now())
             alarmInfo = {
                 'local': trigger.nome,
                 'dateTime': time.mktime(datetime.datetime.now().timetuple()),
             }
-            # print('json:', json.dumps(alarmInfo))
             
             if self.notifConn is not None:
-                # data = b'trigger-alarm' + bytes(nomeAlarme, encoding='utf-8') + b'-'
                 data = b'trigger-notification' + bytes(json.dumps(alarmInfo), encoding='utf-8')
                 self.notifConn.send(data)
                 return True
@@ -189,7 +185,6 @@ class ServerConnection(QThread):
             }
             
             if self.notifConn is not None:
-                # data = b'trigger-alarm' + bytes(nomeAlarme, encoding='utf-8') + b'-'
                 data = b'trigger-alarm' + bytes(json.dumps(alarmInfo), encoding='utf-8')
                 self.notifConn.send(data)
                 return True
