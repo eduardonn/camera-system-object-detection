@@ -1,6 +1,6 @@
 import sys, os, cv2, time
 from PyQt5.QtWidgets import QApplication, QWidget
-from PyQt5.QtGui import QPixmap, QImage, QIcon
+from PyQt5.QtGui import QPixmap, QImage, QIcon, QCursor
 from PyQt5.QtCore import Qt, pyqtSignal
 from add_trigger_window import AddTriggerWindow
 from image_manager import ImageManager
@@ -9,6 +9,7 @@ from area_painter import AreaPainter
 from server import ServerConnection
 from image_widget import ImageWidget
 from detector import SSDDetector
+from blob_size_tester import BlobSizeTester as dt
 import layout, gatilhos, css
 
 class GUI(QWidget):
@@ -18,11 +19,12 @@ class GUI(QWidget):
     def __init__(self):
         super().__init__()
         self.filePath = __file__[:-len(os.path.basename(__file__))]
+        self.camImgs = []
         self.bVisualizarAreas = True
         self.gatilhosThread = gatilhos.initGatilhos(self.updateGatilhoState)
         self.detector = SSDDetector(gatilhos.updateGatilhosAfterDetection)
         self.detector.start()
-        self.imgManager = ImageManager(self.detector.benchmark.printStatistics)
+        self.imgManager = ImageManager(self.detector.benchmark.printStatistics, maxBufferSize=60)
         self.imgManager.onUpdateFrame.append(self.detector.setFrame)
         self.initMainWindow()
         self.areaPainter = AreaPainter()
@@ -31,6 +33,7 @@ class GUI(QWidget):
         # self.server.start()
         self.focusedImage = None
         self.deactivateCheckBoxTimer = time.time()
+        self.camImg1Pixmap = None
 
         self.initImgWidget()
         self.setImagePixmapSignal.connect(self.setImagePixmap)
@@ -108,7 +111,6 @@ class GUI(QWidget):
     def updateFrame(self, frame):
         frameWithDetections = self.detector.drawDetections(frame)
         frame1 = cv2.resize(frameWithDetections, self.camImgShape)
-        # frameResized2 = cv2.resize(self.imgManager.detector.croppedFrame, self.camImgShape)
 
         if self.checkboxViewGatilhos.isChecked():
             frame1 = self.areaPainter.paintAreasMainImg(frame1)
@@ -117,15 +119,24 @@ class GUI(QWidget):
         bytesPerLine = 3 * width
         camImgQImage = QImage(frame1, width, height, bytesPerLine, QImage.Format_RGB888).rgbSwapped()
         camImg1Pixmap = QPixmap(camImgQImage)
-        
-        # frame2 = self.imgManager.detector.croppedFrame
-        # frame2 = np.array(frame2, dtype=np.uint8)
-        # height, width, _ = frame2.shape
-        # bytesPerLine = 3 * width
-        # camImgQImage = QImage(frame2, width, height, bytesPerLine, QImage.Format_RGB888).rgbSwapped()
-        # camImg2Pixmap = QPixmap(camImgQImage)
 
         self.setImagePixmapSignal.emit(self.camImgs[0], camImg1Pixmap)
+
+        if self.detector.resizeStartPoint is None:
+            return
+
+        croppedFrame = frameWithDetections[
+            self.detector.resizeStartPoint[0]:self.detector.resizeEndPoint[0],
+            self.detector.resizeStartPoint[1]:self.detector.resizeEndPoint[1]
+        ]
+
+        frame2 = cv2.resize(croppedFrame, self.camImgShape)
+        height, width, _ = frame2.shape
+        bytesPerLine = 3 * width
+        camImgQImage = QImage(frame2, width, height, bytesPerLine, QImage.Format_RGB888).rgbSwapped()
+        camImg2Pixmap = QPixmap(camImgQImage)
+        
+        self.setImagePixmapSignal.emit(self.camImgs[1], camImg2Pixmap)
 
     def setImagePixmap(self, img, pixmap):
         img.setPixmap(pixmap)
@@ -143,6 +154,12 @@ class GUI(QWidget):
             self.server.sendAlarm(gatilhos.triggerList[0])
         elif e.key() == Qt.Key_4:
             self.imgManager.togglePauseVideo()
+        elif e.key() == Qt.Key_T:
+            coordsGlobal = QCursor.pos()
+            coordsLocal = self.camImgs[0].mapFromGlobal(coordsGlobal)
+            coordsNormalized = (coordsLocal.x() / self.camImgs[0].frameGeometry().width(),
+                                coordsLocal.y() / self.camImgs[0].frameGeometry().height())
+            dt.addTesterToList(coordsNormalized)
         elif e.key() == Qt.Key_Q:
             self.close()
 

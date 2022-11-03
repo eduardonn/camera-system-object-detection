@@ -46,6 +46,7 @@ class Trigger:
         self.tempoPermaneceu = .0
         self.acionado = False
         self.detectionLastTime = time.time()
+        self.timeSinceLastUpdate = time.time()
         self.bDetectionInside = False
         self.widget = None
         self.lTempoPermaneceu = None
@@ -62,7 +63,8 @@ class Trigger:
         db.printDB()
 
     def reset(self):
-        self.tempoPermaneceu = .0
+        self.tempoPermaneceu = 0.
+        self.timeSinceLastUpdate = 0.
         self.acionado = False
 
         if self.widget is not None:
@@ -89,7 +91,6 @@ class UpdateGatilhosPeriodicallyThread(QThread):
     changeGatilhoStateSignal = pyqtSignal(Trigger, bool) # Necessário pois mudanças na UI devem ocorrer na thread principal
 
     def run(self):
-        
         THREAD_TIME_SLEEP = 0.1 # Tempo (em segundos) que a thread irá dormir e incrementar o tempo que detecções permaneceram
         MAX_TIME_INC_LAST_DETECTION = 0.5 # Continuar incrementando o tempo que permaneceu até esse tempo (em segundos)
         TIME_LIMIT_TO_RESET = 10 # Se passar esse tempo (em segundos) sem detecção no gatilho, ele resetará
@@ -102,9 +103,11 @@ class UpdateGatilhosPeriodicallyThread(QThread):
                     if timeSinceLastDetection > TIME_LIMIT_TO_RESET:
                         trigger.reset()
                     continue
+
                 if not trigger.bDetectionInside: continue
 
-                trigger.tempoPermaneceu += timeSinceLastDetection
+                trigger.tempoPermaneceu = (trigger.tempoPermaneceuBeforeDetection
+                                            + time.time() - trigger.detectionLastTime)
 
                 if trigger.lTempoPermaneceu is not None:
                     trigger.lTempoPermaneceu.setText(str(round(trigger.tempoPermaneceu, 3)))
@@ -118,6 +121,26 @@ class UpdateGatilhosPeriodicallyThread(QThread):
                     self.changeGatilhoStateSignal.emit(trigger, True)
 
             time.sleep(THREAD_TIME_SLEEP)
+
+def updateGatilhosAfterDetection(detections):
+    for i in np.arange(0, detections.shape[2]):
+        idx = int(detections[0, 0, i, 1])
+        if idx != 15: continue # Se não for pessoa, vai para a próxima detecção
+
+        confidence = detections[0, 0, i, 2]
+        if confidence > 0.5:
+            boundingBox = detections[0, 0, i, 3:7]
+
+            timeNow = datetime.now()
+            
+            global triggerList
+            for trigger in triggerList:
+                if testHorario(trigger, timeNow) and testBoundingBox(trigger, *boundingBox):
+                    trigger.tempoPermaneceuBeforeDetection = trigger.tempoPermaneceu
+                    trigger.detectionLastTime = time.time()
+                    trigger.bDetectionInside = True
+                else:
+                    trigger.bDetectionInside = False
 
 def initGatilhos(updateGatilhoState):
     global triggerList
@@ -138,28 +161,6 @@ def createGatilho(*args):
     db.createGatilho(gatilho)
     layout.addTrigger(Trigger.triggersWindow, gatilho)
     triggerList.append(gatilho)
-
-def updateGatilhosAfterDetection(detections):
-    '''Deve ser chamada para atualizar gatilhos após uma detecção'''
-
-    for i in np.arange(0, detections.shape[2]):
-        idx = int(detections[0, 0, i, 1])
-        if idx != 15: continue # Se não for pessoa, vai para a próxima detecção
-
-        confidence = detections[0, 0, i, 2]
-        if confidence > 0.5:
-            boundingBox = detections[0, 0, i, 3:7]
-
-            timeNow = datetime.now()
-            
-            global triggerList
-            for trigger in triggerList:
-                if testHorario(trigger, timeNow) and testBoundingBox(trigger, *boundingBox):
-                    trigger.detectionLastTime = time.time()
-                    trigger.bDetectionInside = True
-                else:
-                    trigger.bDetectionInside = False
-        if idx == 15: break
 
 def testHorario(trigger: Trigger, timeNow: datetime) -> bool:
     '''Testa se o horário de agora está dentro do horário do gatilho'''

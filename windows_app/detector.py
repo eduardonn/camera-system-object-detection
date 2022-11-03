@@ -10,11 +10,12 @@ import gatilhos
 class SSDDetector(QThread):
     def __init__(self, onFrameProcessed):
         super(SSDDetector, self).__init__()
-        self.blobSizes = [400, 200]
+        self.onFrameProcessed = onFrameProcessed # Evento chamado após o término de uma detecção
+        self.blobSizes = [1000, 600]
+        self.blobSizeRange = [10, 2000]
         self.frame = None
         self.bDetect = False
         self.detections = None
-        self.onFrameProcessed = onFrameProcessed # Evento chamado após o término de uma detecção
         self.resizeStartPoint = None
         self.resizeEndPoint = None
         self.onlyDetectCroppedFrame = True
@@ -26,7 +27,6 @@ class SSDDetector(QThread):
                         "car", "cat", "chair", "cow", "diningtable", "dog", "horse", "motorbike",
                         "person", "pottedplant", "sheep", "sofa", "train", "tvmonitor"]
 
-        # Get root folder
         rootFolder = __file__[:-len(os.path.basename(__file__))]
         PROTOTXT = rootFolder + "/neural_networks/MobileNetSSD_deploy.prototxt"
         MODEL = rootFolder + "/neural_networks/MobileNetSSD_deploy.caffemodel"
@@ -149,7 +149,7 @@ class SSDDetector(QThread):
             print('invalid blob size value')
             return
 
-        if value < 10 or value > 2000:
+        if value < self.blobSizeRange[0] or value > self.blobSizeRange[1]:
             print('invalid blob size value')
             return
 
@@ -168,7 +168,7 @@ class SSDDetector(QThread):
             confidence = self.detections[0, 0, i, 2]
             if confidence > self.confidenceDrawDetection:
                 box = self.detections[0, 0, i, 3:7] * np.array([w, h, w, h])
-                (startX, startY, endX, endY) = box.astype("int")
+                startX, startY, endX, endY = box.astype("int")
                 label = "{}: {:.2f}%".format(self.CLASSES[idx], confidence * 100)
                 cv2.rectangle(frame, (startX, startY), (endX, endY), self.detectionColor, 2)
                 y = startY - 15 if startY - 15 > 15 else startY + 15

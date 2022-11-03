@@ -3,8 +3,6 @@ import sqlite3
 def createGatilho(gatilho):
     conn = sqlite3.connect('Gatilhos.db')
     cursor = conn.cursor()
-    # cursor.execute('CREATE TABLE gatilhos(nome text)')
-    # cursor.execute('INSERT INTO gatilhos values (ROWID, ?)', (nomeGatilho))
     cursor.execute('INSERT INTO gatilhos values (?,?,?,?,?,?,?,?,?)', (
                     gatilho.nome,
                     gatilho.initialTime,

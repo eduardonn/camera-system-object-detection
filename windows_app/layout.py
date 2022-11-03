@@ -29,7 +29,6 @@ def initMainWindowLayout(UI):
     # UI.checkboxViewGatilhos.setChecked(True)
 
     # Image
-    UI.camImgs = []
     UI.camImgs.append(ImageWidget(UI.handleImageClick))
     UI.camImgs[0].setStyleSheet(css.imageStyle)
     # UI.camImgs[0].setScaledContents(True)
@@ -45,14 +44,14 @@ def initMainWindowLayout(UI):
     UI.lClientConnectedValue.setStyleSheet(css.textRed)
     lImg1BlobSize = QLabel('Blob Size Imagem 1:')
     lImg2BlobSize = QLabel('Blob Size Imagem 2:')
-    lSettings = QLabel('---Settings---')
+    lSettings = QLabel('Settings')
 
     # Slider
-    UI.lPersonSize = QLabel('150')
+    UI.lPersonSize = QLabel(str(UI.imgManager.personTesterSize))
     UI.lPersonSize.hide()
     UI.personTesterSizeSlider = QSlider(Qt.Horizontal)
-    UI.personTesterSizeSlider.setRange(10, 460)
-    UI.personTesterSizeSlider.setValue(150)
+    UI.personTesterSizeSlider.setRange(2, 460)
+    UI.personTesterSizeSlider.setValue(UI.imgManager.personTesterSize)
     UI.personTesterSizeSlider.valueChanged.connect(UI.sliderPersonTesterSize)
     UI.personTesterSizeSlider.setPageStep(50)
     UI.personTesterSizeSlider.setTickInterval(10)
@@ -65,7 +64,8 @@ def initMainWindowLayout(UI):
         UI.inputBlobSize[i].setMaximumSize(45, 28)
         UI.inputBlobSize[i].setStyleSheet(css.blobSizeTextEdit)
         UI.inputBlobSize[i].setText(str(UI.detector.blobSizes[i]))
-        UI.inputBlobSize[i].setValidator(QIntValidator(40, 2500))
+        UI.inputBlobSize[i].setValidator(
+            QIntValidator(UI.detector.blobSizeRange[0], UI.detector.blobSizeRange[1]))
     UI.inputBlobSize[0].textChanged.connect(lambda value: UI.detector.setBlobSize(value, 0))
     UI.inputBlobSize[1].textChanged.connect(lambda value: UI.detector.setBlobSize(value, 1))
 
@@ -109,9 +109,11 @@ def initMainWindowLayout(UI):
     vBoxMain.setStretchFactor(hBoxTop, 1)
     vBoxMain.setStretchFactor(hBoxBottom, 100)
     hBoxBottom.addLayout(vBoxImages)
+    hBoxBottom.setStretchFactor(vBoxImages, 5)
     hBoxBottom.addLayout(vBoxSettings)
-    UI.setLayout(vBoxMain)
+    hBoxBottom.setStretchFactor(vBoxSettings, 1)
 
+    UI.setLayout(vBoxMain)
     UI.show()
 
 def gatilhosWindowLayout(UI):

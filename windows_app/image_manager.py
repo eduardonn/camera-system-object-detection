@@ -1,8 +1,10 @@
 import os
 import time
 import cv2
+from queue import Queue
 from PyQt5.QtCore import QThread
 from blob_size_tester import BlobSizeTester as dt
+from benchmark import Benchmark
 
 class ImageManager:
     onUpdateFrame = []
@@ -10,52 +12,54 @@ class ImageManager:
     instance = None
     frameResolution = (300, 300)
 
-    def __init__(self, onVideoEnd):
+    def __init__(self, onVideoEnd, maxBufferSize):
         ImageManager.instance = self
         filePath = __file__[:-len(os.path.basename(__file__))]
+        self.onVideoEnd.append(onVideoEnd)
         self.cap = cv2.VideoCapture(filePath + '/recordings/Estabelecimento Dia.mp4')
         # self.cap = cv2.VideoCapture(filePath + '/recordings/Estabelecimento Noite.mp4')
         # self.cap = cv2.VideoCapture(filePath + '/recordings/Residencia Noite.mp4')
         # self.cap = cv2.VideoCapture(filePath + '/recordings/Top.mp4')
         # self.cap = cv2.VideoCapture(filePath + '/recordings/Top 2.mp4')
         # self.cap = cv2.VideoCapture(filePath + '/recordings/Bottom.mp4')
-        # self.playRange = (2000, 30000)
-        self.playRange = (24000, 40000)
+        self.playRange = (2000, 30000) # Estabelecimento Dia
+        # self.playRange = (24000, 40000)
         # self.playRange = (70000, 75000)
         # self.playRange = (272000, 290000)
-        self.playRange = (8000, 10000)
+        # self.playRange = (19000, 50000) # Top 2 - 300
+        # self.playRange = (000, 50000) # Bottom
         # self.playRange = (0, 9999999)
         self.cap.set(cv2.CAP_PROP_POS_MSEC, self.playRange[0])
         self.isVideoPaused = False
-        self.onVideoEnd.append(onVideoEnd)
-        ret, self.frame = self.cap.read()
+        self.imageBuffer = Queue(maxsize=maxBufferSize)
+        ret, self.lastFrame = self.cap.read()
         if not ret:
             raise Exception('Read image failed')
-        ImageManager.frameResolution = self.frame.shape[:2]
+        ImageManager.frameResolution = self.lastFrame.shape[:2]
         self.frametime = 1 / 30 # 1 / FPS
         self.showPersonTester = False
-        self.personTesterSize = 150
+        self.personTesterSize = 2
+        dt.addTesterToList((.5, .5))
 
-        self.updateFrameThread = QThread()
-        self.updateFrameThread.run = self.updateFrame
-        self.updateFrameThread.start()
+        self.readFrameThread = QThread()
+        self.readFrameThread.run = self.readFrame
+        self.readFrameThread.start()
 
-    def updateFrame(self) -> None:
+        self.feedFrameThread = QThread()
+        self.feedFrameThread.run = self.feedFrame
+        self.feedFrameThread.start()
+
+    def readFrame(self) -> None:
         """
-        1. Capta imagem das câmeras
-        2. Desenha detecções
-        3. Chama funções inscritas no evento onUpdateFrame
+        1. Read images from cameras
+        2. Put in the buffer
         """
         while True:
-            if self.isVideoPaused:
-                for func in self.onUpdateFrame:
-                    func(self.frame)
-
-                time.sleep(0.2)
+            if self.imageBuffer.full():
+                time.sleep(0.02)
                 continue
 
-            initTime = time.time()
-            ret, self.frame = self.cap.read()
+            ret, frame = self.cap.read()
             
             # Loop video
             if not ret or self.cap.get(cv2.CAP_PROP_POS_MSEC) > self.playRange[1]:
@@ -63,17 +67,40 @@ class ImageManager:
                 for function in self.onVideoEnd:
                     function()
                 continue
+                
+            self.imageBuffer.put(frame)
+            # print('queue size:', self.imageBuffer._qsize())
+
+            # time.sleep(0.3)
+
+    def feedFrame(self) -> None:
+        '''
+        Deliver frames to subscribed functions
+        '''
+        # lastFrame = 
+
+        while True:
+            if self.isVideoPaused:
+                for function in self.onUpdateFrame:
+                    if self.showPersonTester:
+                        self.lastFrame = dt.drawPeople(self.lastFrame, self.personTesterSize)
+                    else:
+                        self.lastFrame = self.lastFrame
+                    function(self.lastFrame)
+
+                time.sleep(0.2)
+                continue
 
             if self.showPersonTester:
-                self.frame = dt.drawPerson(self.frame, self.personTesterSize)
+                self.lastFrame = dt.drawPeople(self.lastFrame, self.personTesterSize)
 
-            for func in self.onUpdateFrame:
-                func(self.frame)
+            for function in self.onUpdateFrame:
+                function(self.lastFrame)
 
-            # Calcula o tempo de sleep necessário para manter 30 fps
-            sleepTime = self.frametime - (time.time() - initTime)
-            # print(f"frametime: {time.time() - initTime} | sleepTime: {sleepTime}")
-            time.sleep(sleepTime if sleepTime > 0.005 else 0.005)
+            self.lastFrame = self.imageBuffer.get()
+
+            # time.sleep(0.005)
+            # time.sleep(self.frametime)
 
     def setShowPersonTester(self, value):
         self.showPersonTester = value
