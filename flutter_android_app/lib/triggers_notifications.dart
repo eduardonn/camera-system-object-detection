@@ -46,7 +46,7 @@ class TriggersNotifications {
       //   throw 'Could not launch $url';
       // }
       print(
-          'openApp result: ${await DeviceApps.openApp('com.example.mobilesursystem')}');
+          '[Notification Click] openApp result: ${await DeviceApps.openApp('dev.eduardonn.sursystem_android_app')}');
     } catch (e) {
       print(e);
     }

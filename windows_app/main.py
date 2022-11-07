@@ -30,7 +30,7 @@ class GUI(QWidget):
         self.areaPainter = AreaPainter()
         self.updateClientStatusSignal.connect(self.updateClientStatus)
         self.server = ServerConnection(lambda status: self.updateClientStatusSignal.emit(status))
-        # self.server.start()
+        self.server.start()
         self.focusedImage = None
         self.deactivateCheckBoxTimer = time.time()
         self.camImg1Pixmap = None

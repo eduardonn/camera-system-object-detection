@@ -21,6 +21,12 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   bool _gridOn = false;
   AppLifecycleState? appLifecycleState;
 
+  _HomePageState() {
+    imageConnection.addListener(() => setState(() {
+          // _frameCount++;
+        }));
+  }
+
   @override
   void initState() {
     super.initState();
@@ -29,10 +35,6 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     print('home_page initState() called');
     Future.delayed(const Duration(seconds: 2),
         () => appLifecycleState = AppLifecycleState.resumed);
-
-    imageConnection.addListener(() => setState(() {
-          // _frameCount++;
-        }));
 
     FlutterBackgroundService()
         .on('alarmReceived')
@@ -51,10 +53,11 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
         DeviceApps.openApp('dev.eduardonn.sursystem_android_app');
       }
 
+      // if (!context.mounted) return;
       Navigator.pushNamed(context, '/alarm', arguments: triggerInfo);
     });
 
-    // FlutterBackgroundService().invoke("appOpened"); // TODO: Activate
+    FlutterBackgroundService().invoke("appOpened");
   }
 
   @override
@@ -93,41 +96,37 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
               ),
             ),
           ),
-          RawMaterialButton(
-            onPressed: () => Navigator.pushNamed(context, '/alarm',
-                arguments: {'local': 'Teste'}),
-            child: const Padding(
-              padding: EdgeInsets.all(8.0),
-              child: Icon(
-                Icons.notifications_active,
-                size: 36,
-              ),
-            ),
-          ),
+          // RawMaterialButton(
+          //   onPressed: () => Navigator.pushNamed(context, '/alarm',
+          //       arguments: {'local': 'Teste'}),
+          //   child: const Padding(
+          //     padding: EdgeInsets.all(8.0),
+          //     child: Icon(
+          //       Icons.notifications_active,
+          //       size: 36,
+          //     ),
+          //   ),
+          // ),
         ],
         title: const Text('Camera Surveillance System'),
       ),
       backgroundColor: Colors.grey[400],
       body: Column(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              MaterialButton(
-                  padding: const EdgeInsets.all(12.0),
-                  child: const Icon(Icons.notifications),
-                  onPressed: () async {
-                    await Future.delayed(const Duration(seconds: 6));
-                    _triggersNotifications.notify('title teste', 'body teste');
-                  }),
-              // MaterialButton(
-              //   padding: EdgeInsets.all(12.0),
-              //   child: Icon(Icons.refresh),
-              //   onPressed: () => imageConnection._connect(),
-              // ),
-            ],
-          ),
+          const Spacer(),
+          // Row(
+          // mainAxisAlignment: MainAxisAlignment.center,
+          // children: [
+          // MaterialButton(
+          //     padding: const EdgeInsets.all(12.0),
+          //     child: const Icon(Icons.notifications),
+          //     onPressed: () async {
+          //       await Future.delayed(const Duration(seconds: 6));
+          //       _triggersNotifications.notify('title teste', 'body teste');
+          //     }),
+          // ],
+          // ),
           if (_gridOn)
             OrientationBuilder(
               builder: (context, orientation) {
@@ -151,117 +150,111 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
             )
           else
             _imageWidget(),
-          // Card(
-          //   child: Text(
-          //     // controller: logTextController,
-          //     // minLines: 8,
-          //     maxLines: 8,
-
+          // Flexible(
+          //   child: GridView.count(
+          //     shrinkWrap: true,
+          //     childAspectRatio: 12 / 2.5,
+          //     clipBehavior: Clip.none,
+          //     crossAxisCount: 2,
+          //     children: <Widget>[
+          //       Padding(
+          //         padding: const EdgeInsets.all(8.0),
+          //         child: ElevatedButton(
+          //           child: const Text("Is App Running"),
+          //           onPressed: () async {
+          //             Logger.log(
+          //                 '[From Service] is running: ${await FlutterBackgroundService().isRunning()}');
+          //           },
+          //         ),
+          //       ),
+          //       Container(
+          //         padding: const EdgeInsets.all(8.0),
+          //         child: ElevatedButton(
+          //           child: const Text("Force Start Service"),
+          //           onPressed: () {
+          //             initializeService(true);
+          //           },
+          //         ),
+          //       ),
+          //       Padding(
+          //         padding: const EdgeInsets.all(8.0),
+          //         child: ElevatedButton(
+          //           child: const Text("Stop Service"),
+          //           onPressed: () {
+          //             FlutterBackgroundService().invoke("stopService");
+          //             imageConnection.stop();
+          //           },
+          //         ),
+          //       ),
+          //       Padding(
+          //         padding: const EdgeInsets.all(8.0),
+          //         child: ElevatedButton(
+          //           child: const Text("Send appOpened"),
+          //           onPressed: () {
+          //             FlutterBackgroundService().invoke("appOpened");
+          //             imageConnection.stop();
+          //           },
+          //         ),
+          //       ),
+          //     ],
           //   ),
           // ),
-          // Spacer(),
-          Flexible(
-            child: GridView.count(
-              shrinkWrap: true,
-              childAspectRatio: 12 / 2.5,
-              clipBehavior: Clip.none,
-              crossAxisCount: 2,
-              children: <Widget>[
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: ElevatedButton(
-                    child: const Text("Is App Running"),
-                    onPressed: () async {
-                      Logger.log(
-                          '[From Service] is running: ${await FlutterBackgroundService().isRunning()}');
-                    },
-                  ),
-                ),
-                Container(
-                  padding: const EdgeInsets.all(8.0),
-                  child: ElevatedButton(
-                    child: const Text("Force Start Service"),
-                    onPressed: () {
-                      initializeService(true);
-                    },
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: ElevatedButton(
-                    child: const Text("Stop Service"),
-                    onPressed: () {
-                      FlutterBackgroundService().invoke("stopService");
-                      imageConnection.stop();
-                    },
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: ElevatedButton(
-                    child: const Text("Send appOpened"),
-                    onPressed: () {
-                      FlutterBackgroundService().invoke("appOpened");
-                      imageConnection.stop();
-                    },
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Expanded(child: Logger()),
-          // const Spacer(),
-          Container(
-            margin: const EdgeInsets.only(top: 12.0),
-            padding: const EdgeInsets.all(5.0),
-            child: Row(
-              children: [
-                Row(
-                  children: <Widget>[
-                    const Text(
-                      'Data packets discarded: ',
-                      style: TextStyle(
-                        fontSize: 12,
-                        decoration: TextDecoration.none,
-                        color: Colors.black,
+          // Expanded(child: Logger()),
+          const Spacer(),
+          Align(
+            alignment: Alignment.bottomCenter,
+            child: Container(
+              margin: const EdgeInsets.only(top: 12.0),
+              padding: const EdgeInsets.all(5.0),
+              child: Row(
+                children: [
+                  Row(
+                    children: <Widget>[
+                      const Text(
+                        'Data packets discarded: ',
+                        style: TextStyle(
+                          fontSize: 12,
+                          decoration: TextDecoration.none,
+                          color: Colors.black,
+                        ),
                       ),
-                    ),
-                    StreamBuilder<int>(
-                        stream: imageConnection.imageReceiver
-                            .timesFrameNotFoundStreamController.stream,
-                        builder: (context, snapshot) {
-                          return Text(
-                            '${snapshot.data}',
-                            style: const TextStyle(
-                              fontSize: 12,
-                              decoration: TextDecoration.none,
-                              color: Colors.black,
-                            ),
-                          );
-                        }),
-                  ],
-                ),
-                const Spacer(),
-                StreamBuilder<Map<String, dynamic>?>(
-                  stream: FlutterBackgroundService().on('onUpdateState'),
-                  builder: (context, snapshot) {
-                    if (!snapshot.hasData) {
-                      return stateText('Disconnected', Colors.red);
-                    }
-
-                    final data = snapshot.data!;
-
-                    switch (ConnectionState.values[data['state']]) {
-                      case ConnectionState.done:
-                        return stateText('Connected', Colors.green);
-                      case ConnectionState.waiting:
-                        return stateText('Trying to Connect', Colors.blue);
-                      default:
+                      StreamBuilder<int>(
+                          stream: imageConnection.imageReceiver
+                              .timesFrameNotFoundStreamController.stream,
+                          builder: (context, snapshot) {
+                            return Text(
+                              '${snapshot.data}',
+                              style: const TextStyle(
+                                fontSize: 12,
+                                decoration: TextDecoration.none,
+                                color: Colors.black,
+                              ),
+                            );
+                          }),
+                    ],
+                  ),
+                  const Spacer(),
+                  StreamBuilder<Map<String, dynamic>?>(
+                    stream: FlutterBackgroundService().on('onUpdateState'),
+                    builder: (context, snapshot) {
+                      if (!snapshot.hasData) {
                         return stateText('Disconnected', Colors.red);
-                    }
-                  },
-                ),
-              ],
+                      }
+
+                      final data = snapshot.data!;
+
+                      switch (ConnectionState.values[data['state']]) {
+                        case ConnectionState.done:
+                          return stateText('Connected', Colors.green);
+                        case ConnectionState.waiting:
+                          return stateText('Trying to Connect', Colors.blue);
+                        default:
+                          return stateText('Disconnected', Colors.red);
+                      }
+                    },
+                  ),
+                ],
+              ),
             ),
           ),
         ],
