@@ -222,9 +222,9 @@ class ServerConnection(QThread):
 
     def queryTriggerEvents(self):
         for trigger in self.triggerQueue:
-            self.sendTrigger(trigger)
+            self.fireTrigger(trigger)
 
-    def sendTrigger(self, trigger):
+    def fireTrigger(self, trigger):
         isSent = True
         try:
             self.triggerQueue.remove(trigger)

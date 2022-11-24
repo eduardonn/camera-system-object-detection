@@ -12,30 +12,39 @@ class ImageManager:
     instance = None
     frameResolution = (300, 300)
 
-    def __init__(self, onVideoEnd, maxBufferSize):
+    def __init__(self, maxBufferSize):
         ImageManager.instance = self
         filePath = __file__[:-len(os.path.basename(__file__))]
-        self.onVideoEnd.append(onVideoEnd)
-        self.cap = cv2.VideoCapture(filePath + '/recordings/Estabelecimento Dia.mp4')
-        # self.cap = cv2.VideoCapture(filePath + '/recordings/Estabelecimento Noite.mp4')
-        # self.cap = cv2.VideoCapture(filePath + '/recordings/Residencia Noite.mp4')
-        # self.cap = cv2.VideoCapture(filePath + '/recordings/Top.mp4')
-        # self.cap = cv2.VideoCapture(filePath + '/recordings/Top 2.mp4')
-        # self.cap = cv2.VideoCapture(filePath + '/recordings/Bottom.mp4')
-        self.playRange = (2000, 30000) # Estabelecimento Dia
+        self.cap = cv2.VideoCapture(filePath + '/recordings/tests/Estabelecimento Dia.mp4')
+        # self.cap = cv2.VideoCapture(0)
+        # self.cap = cv2.VideoCapture(filePath + '/recordings/tests/Estabelecimento Noite.mp4')
+        # self.cap = cv2.VideoCapture(filePath + '/recordings/tests/Residencia Dia.mp4')
+        # self.cap = cv2.VideoCapture(filePath + '/recordings/tests/Residencia Noite.mp4')
+        # self.cap = cv2.VideoCapture(filePath + '/recordings/tests/Extremo Topo.mp4')
+        # self.cap = cv2.VideoCapture(filePath + '/recordings/tests/Top-1.mp4')
+        # self.cap = cv2.VideoCapture(filePath + '/recordings/tests/Top-1-LookingStraight.mp4')
+        # self.cap = cv2.VideoCapture(filePath + '/recordings/tests/Top-2.mp4')
+        # self.cap = cv2.VideoCapture(filePath + '/recordings/tests/Diagonal Superior.mp4')
+        # self.cap = cv2.VideoCapture(filePath + '/recordings/tests/Lateral.mp4')
+        # self.cap = cv2.VideoCapture(filePath + '/recordings/tests/Bottom.mp4')
+        # self.cap = cv2.VideoCapture(filePath + '/recordings/tests/Alleged Intruder.mp4')
+        # self.cap = cv2.VideoCapture(filePath + '/recordings/tests/Brazen Burglars Break Into Home.mp4')
+        # self.playRange = (0000, 30000) # Estabelecimento Dia
         # self.playRange = (24000, 40000)
         # self.playRange = (70000, 75000)
         # self.playRange = (272000, 290000)
         # self.playRange = (19000, 50000) # Top 2 - 300
         # self.playRange = (000, 50000) # Bottom
-        # self.playRange = (0, 9999999)
-        self.cap.set(cv2.CAP_PROP_POS_MSEC, self.playRange[0])
+        self.playRange = (0, 999999)
+        # self.cap.set(cv2.CAP_PROP_POS_MSEC, self.playRange[0])
         self.isVideoPaused = False
+        self.isVideo = True
+        self.bVideoEnded = False
         self.imageBuffer = Queue(maxsize=maxBufferSize)
-        ret, self.lastFrame = self.cap.read()
+        ret, self.lastFrameRead = self.cap.read()
         if not ret:
-            raise Exception('Read image failed')
-        ImageManager.frameResolution = self.lastFrame.shape[:2]
+            raise Exception('Reading image failed')
+        ImageManager.frameResolution = self.lastFrameRead.shape[:2]
         self.frametime = 1 / 30 # 1 / FPS
         self.showPersonTester = False
         self.personTesterSize = 2
@@ -56,51 +65,56 @@ class ImageManager:
         """
         while True:
             if self.imageBuffer.full():
-                time.sleep(0.02)
+                time.sleep(0.05)
                 continue
 
             ret, frame = self.cap.read()
             
-            # Loop video
-            if not ret or self.cap.get(cv2.CAP_PROP_POS_MSEC) > self.playRange[1]:
+            if self.isVideo and (not ret or self.cap.get(cv2.CAP_PROP_POS_MSEC) > self.playRange[1]):
+                self.bVideoEnded = True
                 self.cap.set(cv2.CAP_PROP_POS_MSEC, self.playRange[0])
-                for function in self.onVideoEnd:
-                    function()
+                time.sleep(0.1)
                 continue
                 
             self.imageBuffer.put(frame)
-            # print('queue size:', self.imageBuffer._qsize())
-
-            # time.sleep(0.3)
 
     def feedFrame(self) -> None:
         '''
         Deliver frames to subscribed functions
         '''
-        # lastFrame = 
+        lastFrameTime = time.time()
 
         while True:
-            if self.isVideoPaused:
-                for function in self.onUpdateFrame:
-                    if self.showPersonTester:
-                        self.lastFrame = dt.drawPeople(self.lastFrame, self.personTesterSize)
-                    else:
-                        self.lastFrame = self.lastFrame
-                    function(self.lastFrame)
-
-                time.sleep(0.2)
-                continue
+            initTime = time.time()
 
             if self.showPersonTester:
-                self.lastFrame = dt.drawPeople(self.lastFrame, self.personTesterSize)
+                self.lastFrameRead = dt.drawPeople(self.lastFrameRead, self.personTesterSize)
 
             for function in self.onUpdateFrame:
-                function(self.lastFrame)
+                function(self.lastFrameRead)
 
-            self.lastFrame = self.imageBuffer.get()
+            if self.isVideoPaused:
+                time.sleep(0.2)
+                continue
+                    
+            self.lastFrameRead = self.imageBuffer.get()
+
+            while self.lastFrameRead is None:
+                time.sleep(0.05)
+                self.lastFrameRead = self.imageBuffer.get()
+
+                if self.bVideoEnded:
+                    for function in self.onVideoEnd:
+                        function()
+                    # os._exit(0)
 
             # time.sleep(0.005)
-            # time.sleep(self.frametime)
+            # print('DeltaTime:', time.time() - lastFrameTime)
+            # lastFrameTime = time.time()
+            
+            sleepTime = self.frametime - (time.time() - initTime)
+            if sleepTime > 0.011:
+                time.sleep(sleepTime - 0.011)
 
     def setShowPersonTester(self, value):
         self.showPersonTester = value

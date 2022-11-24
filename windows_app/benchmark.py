@@ -1,5 +1,6 @@
 import time, math
 import numpy as np
+import gatilhos
 
 class Benchmark:
     def __init__(self, name):
@@ -25,13 +26,26 @@ class Benchmark:
 
         return timeElapsed
 
+    def restartExecutionTime(self):
+        self.executionInitTime = time.time()
+
     def printStatistics(self):
         if len(self.detectionTimeList) == 0:
             print('[BENCHMARK] Detection list is empty')
             return
 
+        executionTime = time.time() - self.executionInitTime
+        acuracia = gatilhos.triggerList[0].tempoPermaneceu / executionTime * 100
+        acuraciaStr = str(round(acuracia, 2)).replace('.', ',')
+
         print(f'----------BENCHMARK [{self.name}]----------')
-        print(f'Average time:\t{round(self.detectionTimeList.mean(), 3)}s')
-        print(f'Max time:\t{round(self.detectionTimeList.max(), 3)}s')
-        print(f'Min time:\t{round(self.detectionTimeList.min(), 3)}s')
-        print(f'Total execution time:\t{round(time.time() - self.executionInitTime, 3)}s')
+        print(f'Average time\tMax time\tMin times')
+        print(int(self.detectionTimeList.min() * 1000),
+              int(self.detectionTimeList.mean() * 1000),
+              int(self.detectionTimeList.max() * 1000))
+        # print(f'Average time:\t{round(self.detectionTimeList.mean(), 3)}s')
+        # print(f'Max time:\t{round(self.detectionTimeList.max(), 3)}s')
+        # print(f'Min time:\t{round(self.detectionTimeList.min(), 3)}s')
+        print(f'Total execution time:\t{round(executionTime, 3)}s')
+        print(f'Tempo de Permanencia: {gatilhos.triggerList[0].tempoPermaneceu}')
+        print(f'Acurácia: {acuraciaStr}%')

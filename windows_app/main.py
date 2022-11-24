@@ -1,8 +1,8 @@
 import sys, os, cv2, time
+from playsound import playsound
 from PyQt5.QtWidgets import QApplication, QWidget
 from PyQt5.QtGui import QPixmap, QImage, QIcon, QCursor
 from PyQt5.QtCore import Qt, pyqtSignal
-from add_trigger_window import AddTriggerWindow
 from image_manager import ImageManager
 from gatilhos_window import TriggersWindow
 from area_painter import AreaPainter
@@ -24,13 +24,14 @@ class GUI(QWidget):
         self.gatilhosThread = gatilhos.initGatilhos(self.updateGatilhoState)
         self.detector = SSDDetector(gatilhos.updateGatilhosAfterDetection)
         self.detector.start()
-        self.imgManager = ImageManager(self.detector.benchmark.printStatistics, maxBufferSize=60)
+        self.imgManager = ImageManager(maxBufferSize=60)
+        self.imgManager.onVideoEnd.append(self.detector.benchmark.printStatistics)
         self.imgManager.onUpdateFrame.append(self.detector.setFrame)
         self.initMainWindow()
         self.areaPainter = AreaPainter()
         self.updateClientStatusSignal.connect(self.updateClientStatus)
         self.server = ServerConnection(lambda status: self.updateClientStatusSignal.emit(status))
-        self.server.start()
+        # self.server.start()
         self.focusedImage = None
         self.deactivateCheckBoxTimer = time.time()
         self.camImg1Pixmap = None
@@ -111,9 +112,15 @@ class GUI(QWidget):
     def updateFrame(self, frame):
         frameWithDetections = self.detector.drawDetections(frame)
         frame1 = cv2.resize(frameWithDetections, self.camImgShape)
-
+           
         if self.checkboxViewGatilhos.isChecked():
             frame1 = self.areaPainter.paintAreasMainImg(frame1)
+            # frameWithDetections = self.areaPainter.paintAreasMainImg(frameWithDetections)
+
+        # cv2.imshow('frame', frame1)
+        # if cv2.waitKey(1) & 0xFF == ord('q'):
+        #     os._exit(0)
+        # return
 
         height, width, _ = frame1.shape
         bytesPerLine = 3 * width
@@ -145,7 +152,10 @@ class GUI(QWidget):
         if gatilho.widget is not None:
             gatilho.widget.setStyleSheet(css.gatilhoAcionado if state else css.gatilhoPadrao)
 
-        self.server.sendTrigger(gatilho)
+        self.server.fireTrigger(gatilho)
+
+    def setSilenceAlarm(value: bool) -> None:
+        gatilhos.Trigger.isAlarmSilenced = value
 
     def keyPressEvent(self, e):
         if e.key() == Qt.Key_2:
@@ -154,6 +164,8 @@ class GUI(QWidget):
             self.server.sendAlarm(gatilhos.triggerList[0])
         elif e.key() == Qt.Key_4:
             self.imgManager.togglePauseVideo()
+        elif e.key() == Qt.Key_5:
+            playsound(self.filePath + '/sounds/mixkit-classic-short-alarm.wav')
         elif e.key() == Qt.Key_T:
             coordsGlobal = QCursor.pos()
             coordsLocal = self.camImgs[0].mapFromGlobal(coordsGlobal)
@@ -173,9 +185,6 @@ class GUI(QWidget):
 
     def openGatilhosWindow(self):
         self.gatilhosWindow = TriggersWindow(self)
-    
-    def openDrawAreaWindow(self):
-        self.drawAreaWindow = AddTriggerWindow()
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)

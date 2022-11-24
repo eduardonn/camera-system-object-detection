@@ -26,7 +26,7 @@ class TriggersWindow(QWidget):
         gatilhos.Trigger.triggersWindow = self # Cria uma variável estática referenciando esta instância
         
         for gatilho in gatilhos.triggerList:
-            layout.addTrigger(self, gatilho)
+            layout.addTriggerOnViewList(self, gatilho)
 
     def keyPressEvent(self, e):
         if e.key() == Qt.Key_Q:

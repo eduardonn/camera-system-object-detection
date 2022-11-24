@@ -11,7 +11,7 @@ class SSDDetector(QThread):
     def __init__(self, onFrameProcessed):
         super(SSDDetector, self).__init__()
         self.onFrameProcessed = onFrameProcessed # Evento chamado após o término de uma detecção
-        self.blobSizes = [1000, 600]
+        self.blobSizes = [400, 600]
         self.blobSizeRange = [10, 2000]
         self.frame = None
         self.bDetect = False
@@ -38,9 +38,9 @@ class SSDDetector(QThread):
             self.net.setPreferableTarget(cv2.dnn.DNN_TARGET_CUDA)
 
     def run(self):
+        self.benchmark.restartExecutionTime()
         while(True):
             if self.bDetect:
-                self.benchmark.startTimer()
                 
                 if self.frame is None:
                     self.bDetect = False
@@ -60,7 +60,6 @@ class SSDDetector(QThread):
                     # Ao terminar uma detecção, chama função
                     self.onFrameProcessed(self.detections)
 
-                self.benchmark.stopTimer(bPrint = True)
                 time.sleep(.01)
             else:
                 if self.frame is not None:
@@ -69,11 +68,20 @@ class SSDDetector(QThread):
                 time.sleep(0.5)
 
     def detect(self, frame):
-        blobShape = (int(self.blobSizes[0] * self.aspectRatio * self.detectionAreaSizeMultiplier),
-                    int(self.blobSizes[0] * self.detectionAreaSizeMultiplier))
+        self.benchmark.startTimer()
+
+        blobShape = (int(self.blobSizes[0]
+                     * self.aspectRatio
+                    #  * self.detectionAreaSizeMultiplier
+                    ),
+                    int(self.blobSizes[0]
+                    # * self.detectionAreaSizeMultiplier
+                    ))
         blob = cv2.dnn.blobFromImage(frame, 1/255.0, blobShape, 127.5)
         self.net.setInput(blob)
         detections = self.net.forward()
+
+        self.benchmark.stopTimer(True)
 
         return detections
 
@@ -102,6 +110,15 @@ class SSDDetector(QThread):
             detections[0, 0, i, 4] = (detections[0, 0, i, 4] * croppedFrameHeight + self.resizeStartPoint[0]) / frameHeight
             detections[0, 0, i, 5] = (detections[0, 0, i, 5] * croppedFrameWidth + self.resizeStartPoint[1]) / frameWidth
             detections[0, 0, i, 6] = (detections[0, 0, i, 6] * croppedFrameHeight + self.resizeStartPoint[0]) / frameHeight
+
+            if detections[0, 0, i, 3] < 0:
+                detections[0, 0, i, 3] = 0
+            if detections[0, 0, i, 4] < 0:
+                detections[0, 0, i, 4] = 0
+            if detections[0, 0, i, 5] > 1:
+                detections[0, 0, i, 5] = 1
+            if detections[0, 0, i, 6] > 1:
+                detections[0, 0, i, 6] = 1
 
         return detections
     

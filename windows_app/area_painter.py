@@ -4,14 +4,15 @@ from PyQt5.QtGui import QCursor
 import gatilhos
 
 class AreaPainter:
-    AREA_COLOR_STANDARD = (0, 255, 255)
+    AREA_COLOR_STANDARD = (0, 255, 0)
+    AREA_COLOR_DETECTING = (0, 255, 255)
     AREA_COLOR_GATILHO_ACIONADO = (0, 0, 255)
     AREA_CONTOUR_COLOR = (80, 0, 80)
     
     def __init__(self):
         self.areaStartPoint = None
         self.areaEndPoint = None
-        self.areas = []
+        self.areas = [[[0, 0], [0, 0]]]
 
     def paintAreasAddGatilho(self, frame):
         areas = np.zeros_like(frame, np.uint8)
@@ -40,6 +41,8 @@ class AreaPainter:
             
             if gatilho.acionado:
                 areaColor = self.AREA_COLOR_GATILHO_ACIONADO
+            elif gatilho.bDetectionInside:
+                areaColor = self.AREA_COLOR_DETECTING
             else:
                 areaColor = self.AREA_COLOR_STANDARD
             cv2.rectangle(areas, startPoint, endPoint, areaColor, cv2.FILLED)
@@ -61,7 +64,8 @@ class AreaPainter:
         self.areaEndPoint = self.getWidgetCoord()
 
     def saveArea(self):
-        self.areas.append([self.areaStartPoint, self.areaEndPoint])
+        # self.areas.append([self.areaStartPoint, self.areaEndPoint]) # For more than one area per trigger
+        self.areas[0] = [self.areaStartPoint, self.areaEndPoint]
         self.areaStartPoint = None
         self.areaEndPoint = None
 

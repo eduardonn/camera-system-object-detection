@@ -85,6 +85,11 @@ class AddTriggerWindow(QWidget):
             print("Não há áreas desenhadas")
             return
 
+        if (self.areaPainter.areas[0][0][0] - self.areaPainter.areas[0][1][0] >= 0
+            or self.areaPainter.areas[0][0][1] - self.areaPainter.areas[0][1][1] >= 0):
+            print('Área inválida. Desenhe novamente.')
+            return
+
         # Normaliza areas
         areaStartX = self.areaPainter.areas[0][0][0] / self.camImgShape[0]
         areaStartY = self.areaPainter.areas[0][0][1] / self.camImgShape[1]

@@ -23,10 +23,17 @@ def initMainWindowLayout(UI):
     # CheckBox visualizar detecções
     UI.checkboxViewGatilhos = QCheckBox('Visualizar Gatilhos')
     UI.checkboxViewGatilhos.setStyleSheet(css.checkBoxStyle)
+    
+    # CheckBox ajustar blob size
     checkboxBlobSize = QCheckBox('Ajustar Blob Size')
     checkboxBlobSize.setStyleSheet(css.checkBoxStyle)
     checkboxBlobSize.clicked.connect(UI.onCheckboxAjustarBlobSizeClick)
     # UI.checkboxViewGatilhos.setChecked(True)
+
+    # CheckBox silenciar alarme
+    checkboxSilenciarAlarme = QCheckBox('Silenciar Alarme')
+    checkboxSilenciarAlarme.setStyleSheet(css.checkBoxStyle)
+    checkboxSilenciarAlarme.clicked.connect(UI.setSilenceAlarm)
 
     # Image
     UI.camImgs.append(ImageWidget(UI.handleImageClick))
@@ -75,7 +82,6 @@ def initMainWindowLayout(UI):
     hBoxTop = QHBoxLayout()
     hBoxTop.setAlignment(Qt.AlignTop)
     hBoxBottom = QHBoxLayout()
-    vBoxLogPanel = QVBoxLayout()
     vBoxImages = QVBoxLayout()
     vBoxImages.setAlignment(Qt.AlignCenter)
     vBoxSettings = QVBoxLayout()
@@ -95,6 +101,7 @@ def initMainWindowLayout(UI):
     vBoxSettings.addWidget(lSettings, alignment=Qt.AlignTop | Qt.AlignCenter)
     vBoxSettings.addWidget(UI.checkboxViewGatilhos)
     vBoxSettings.addWidget(checkboxBlobSize)
+    vBoxSettings.addWidget(checkboxSilenciarAlarme)
     hBoxBlobSizeAjuste.addWidget(UI.personTesterSizeSlider)
     hBoxBlobSizeAjuste.addWidget(UI.lPersonSize)
     vBoxSettings.addLayout(hBoxBlobSizeAjuste)
@@ -227,7 +234,7 @@ def addTriggerWindowLayout(UI):
     UI.setLayout(vBoxMain)
     UI.show()
 
-def addTrigger(UI, trigger):
+def addTriggerOnViewList(UI, trigger):
     trigger.widget = triggerBackground = QWidget()
     triggerBackground.setObjectName('triggerBackground')
     
