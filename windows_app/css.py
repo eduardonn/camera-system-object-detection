@@ -1,6 +1,8 @@
 backgroundColor = 'rgb(35, 35, 35)'
 buttonHoverColor = 'rgb(80, 80, 80)'
 buttonPressedColor = 'rgb(110, 110, 110)'
+gatilhoPadraoColor = 'rgb(45, 45, 45)'
+gatilhoAcionadoColor = 'rgb(100, 0, 0)'
 
 windowStyle = '''
     *{
@@ -68,14 +70,14 @@ scrollAreaStyle = '''
 
 gatilhoPadrao = '''
     QWidget#triggerBackground {
-        background-color: rgb(45, 45, 45);
+        background-color: ''' + gatilhoPadraoColor + ''';
         border: 2px inset gray;
     }
     '''
 
 gatilhoAcionado = '''
     QWidget#triggerBackground {
-        background-color: rgb(45, 45, 45);
+        background-color: ''' + gatilhoAcionadoColor + ''';
         border: 2px inset red;
     }
     '''

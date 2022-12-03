@@ -104,13 +104,21 @@ void onStart(ServiceInstance service) async {
     // If app was closed when it received an alarm, it will open now
     triggersConnection.setRequestVideo(true);
 
+    print('[Background Service] Invoking onUpdateState on appOpened');
+    service.invoke(
+      'onUpdateState',
+      {
+        "state": triggersConnection.connectionState.index,
+      },
+    );
+
     print('[Service] appOpened event received');
     if (triggersConnection.alarmReceived == null) {
       print('[Service] no alarm has arrived');
       return;
     }
-
     service.invoke('alarmReceived', triggersConnection.alarmReceived);
+    triggersConnection.alarmReceived = null;
   });
 
   // Timer.periodic(Duration(seconds: 5), (timer) async {

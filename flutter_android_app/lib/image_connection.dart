@@ -21,7 +21,7 @@ class ImageConnection extends ChangeNotifier {
   ConnectionState _connectionState = ConnectionState.none;
   final _timeSinceLastResponse = Stopwatch();
   Socket? _socket;
-  Stream<Map<String, dynamic>?> _connectionStream;
+  final Stream<Map<String, dynamic>?> _connectionStream;
   Timer? _connectionCheckerTimer;
   var imageReceiver = ImageReceiver();
 
@@ -33,7 +33,7 @@ class ImageConnection extends ChangeNotifier {
     _connectionStream.listen((Map<String, dynamic>? event) {
       switch (ConnectionState.values[event?['state']]) {
         case ConnectionState.done:
-          // If Notifications Connection is established, then start Image Connection
+          // If Notifications Connection is established, start Image Connection
           debugPrint('[Images] Starting connection');
           start();
           break;
@@ -81,7 +81,7 @@ class ImageConnection extends ChangeNotifier {
     _socket?.destroy();
 
     final prefs = await SharedPreferences.getInstance();
-    String? serverIP = await prefs.getString('server_ip');
+    String? serverIP = prefs.getString('server_ip');
     debugPrint('[Images] Trying to connect to $serverIP');
 
     try {

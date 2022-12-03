@@ -1,10 +1,8 @@
 import 'package:device_apps/device_apps.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
-import 'package:flutter_android_app/background_service_notifications.dart';
 import 'package:flutter_android_app/image_connection.dart';
 import 'package:flutter_android_app/triggers_notifications.dart';
-import 'package:flutter_android_app/logger.dart';
 import 'package:flutter_windowmanager/flutter_windowmanager.dart';
 
 class HomePage extends StatefulWidget {
@@ -17,7 +15,6 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   final imageConnection =
       ImageConnection(FlutterBackgroundService().on('onUpdateState'));
-  final _triggersNotifications = TriggersNotifications();
   bool _gridOn = false;
   AppLifecycleState? appLifecycleState;
 

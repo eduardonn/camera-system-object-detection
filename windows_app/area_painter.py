@@ -7,7 +7,7 @@ class AreaPainter:
     AREA_COLOR_STANDARD = (0, 255, 0)
     AREA_COLOR_DETECTING = (0, 255, 255)
     AREA_COLOR_GATILHO_ACIONADO = (0, 0, 255)
-    AREA_CONTOUR_COLOR = (80, 0, 80)
+    AREA_COLOR_OUTLINE = (80, 0, 80)
     
     def __init__(self):
         self.areaStartPoint = None
@@ -64,8 +64,8 @@ class AreaPainter:
         self.areaEndPoint = self.getWidgetCoord()
 
     def saveArea(self):
-        # self.areas.append([self.areaStartPoint, self.areaEndPoint]) # For more than one area per trigger
-        self.areas[0] = [self.areaStartPoint, self.areaEndPoint]
+        self.areas.append([self.areaStartPoint, self.areaEndPoint])
+        # self.areas[0] = [self.areaStartPoint, self.areaEndPoint]
         self.areaStartPoint = None
         self.areaEndPoint = None
 

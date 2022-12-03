@@ -173,9 +173,8 @@ class ServerConnection(QThread):
                 print('notifConn is None')
                 return False
         except Exception as e:
-            print('[exception while sending alarm]')
+            print('[exception while sending notification]')
             print(e)
-            os._exit(1)
 
     def sendAlarm(self, trigger):
         try:
@@ -218,7 +217,6 @@ class ServerConnection(QThread):
         except Exception as e:
             print('exception while sending alarm:')
             print(e)
-            os._exit(1)
 
     def queryTriggerEvents(self):
         for trigger in self.triggerQueue:

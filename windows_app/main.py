@@ -24,14 +24,14 @@ class GUI(QWidget):
         self.gatilhosThread = gatilhos.initGatilhos(self.updateGatilhoState)
         self.detector = SSDDetector(gatilhos.updateGatilhosAfterDetection)
         self.detector.start()
-        self.imgManager = ImageManager(maxBufferSize=60)
+        self.imgManager = ImageManager(maxBufferSize=10)
         self.imgManager.onVideoEnd.append(self.detector.benchmark.printStatistics)
         self.imgManager.onUpdateFrame.append(self.detector.setFrame)
         self.initMainWindow()
         self.areaPainter = AreaPainter()
         self.updateClientStatusSignal.connect(self.updateClientStatus)
         self.server = ServerConnection(lambda status: self.updateClientStatusSignal.emit(status))
-        # self.server.start()
+        self.server.start()
         self.focusedImage = None
         self.deactivateCheckBoxTimer = time.time()
         self.camImg1Pixmap = None

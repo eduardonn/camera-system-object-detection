@@ -156,7 +156,8 @@ class TriggersConnection {
   }
 
   void _handleAlarmReceived(List<int> event) async {
-    onTriggerAlarmReceived(_infoFromEvent(event, ALARM_PREFIX_MSG.length));
+    alarmReceived =
+        onTriggerAlarmReceived(_infoFromEvent(event, ALARM_PREFIX_MSG.length));
     _checkIfAlarmWasReceived();
   }
 
@@ -174,7 +175,6 @@ class TriggersConnection {
 
     Map<String, dynamic>? info =
         jsonDecode(utf8.decode(event.sublist(jsonStartIndex, i + 1)));
-    alarmReceived = info;
     print('info: $info');
     // alarmReceived?['frame'] = await imageReceiver.frameStream.stream.last;
     // print('received alarm image');
