@@ -64,8 +64,11 @@ class AreaPainter:
         self.areaEndPoint = self.getWidgetCoord()
 
     def saveArea(self):
-        self.areas.append([self.areaStartPoint, self.areaEndPoint])
-        # self.areas[0] = [self.areaStartPoint, self.areaEndPoint]
+        # TODO: Make it so only one or multiple areas are added in the trigger
+        if len(self.areas) == 0:
+            self.areas.append([self.areaStartPoint, self.areaEndPoint])
+        else:
+            self.areas[0] = [self.areaStartPoint, self.areaEndPoint]
         self.areaStartPoint = None
         self.areaEndPoint = None
 

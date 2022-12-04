@@ -13,29 +13,10 @@ class ImageManager:
 
     def __init__(self, maxBufferSize):
         filePath = __file__[:-len(os.path.basename(__file__))]
-        self.isVideo = False
+        self.isVideo = True
         if self.isVideo:
             self.cap = cv2.VideoCapture(filePath + '/recordings/tests/Estabelecimento Dia.mp4')
-            # self.cap = cv2.VideoCapture(filePath + '/recordings/Estabelecimento Dia.mp4')
-            # self.cap = cv2.VideoCapture(filePath + '/recordings/tests/Estabelecimento Noite.mp4')
-            # self.cap = cv2.VideoCapture(filePath + '/recordings/tests/Residencia Dia.mp4')
-            # self.cap = cv2.VideoCapture(filePath + '/recordings/tests/Residencia Noite.mp4')
-            # self.cap = cv2.VideoCapture(filePath + '/recordings/tests/Extremo Topo.mp4')
-            # self.cap = cv2.VideoCapture(filePath + '/recordings/tests/Top-1.mp4')
-            # self.cap = cv2.VideoCapture(filePath + '/recordings/tests/Top-1-LookingStraight.mp4')
-            # self.cap = cv2.VideoCapture(filePath + '/recordings/tests/Top-2.mp4')
-            # self.cap = cv2.VideoCapture(filePath + '/recordings/tests/Diagonal Superior.mp4')
-            # self.cap = cv2.VideoCapture(filePath + '/recordings/tests/Lateral.mp4')
-            # self.cap = cv2.VideoCapture(filePath + '/recordings/tests/Bottom.mp4')
-            # self.cap = cv2.VideoCapture(filePath + '/recordings/tests/Alleged Intruder.mp4')
-            # self.cap = cv2.VideoCapture(filePath + '/recordings/tests/Brazen Burglars Break Into Home.mp4')
-            # self.playRange = (4000, 156000) # Estabelecimento Dia
-            # self.playRange = (24000, 40000)
-            # self.playRange = (70000, 75000)
-            # self.playRange = (272000, 290000)
-            # self.playRange = (19000, 50000) # Top 2 - 300
-            # self.playRange = (000, 50000) # Bottom
-            # self.playRange = (0, 999999)
+            self.playRange = (0, 999999) # Video start-end in ms
             self.cap.set(cv2.CAP_PROP_POS_MSEC, self.playRange[0])
         else:
             self.cap = cv2.VideoCapture(0)
