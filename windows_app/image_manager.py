@@ -5,6 +5,7 @@ from queue import Queue
 from PyQt5.QtCore import QThread
 from blob_size_tester import BlobSizeTester as dt
 from benchmark import Benchmark
+from matplotlib import pyplot as plt
 
 class ImageManager:
     onUpdateFrame = []
@@ -106,7 +107,3 @@ class ImageManager:
 
     def togglePauseVideo(self):
         self.isVideoPaused = not self.isVideoPaused
-    
-    # def terminateDetectors(self):
-    #     for p in self.detectorProcesses:
-    #         p.terminate()

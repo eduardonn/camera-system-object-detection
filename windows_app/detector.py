@@ -52,6 +52,7 @@ class SSDDetector(QThread):
                             self.resizeStartPoint[0]:self.resizeEndPoint[0],
                             self.resizeStartPoint[1]:self.resizeEndPoint[1]
                         ]
+                        
                         detections = self.detect(croppedFrame)
                         self.detections = self.convertCoordsCroppedToOriginal(detections)
                     else:
@@ -70,13 +71,14 @@ class SSDDetector(QThread):
     def detect(self, frame):
         self.benchmark.startTimer()
 
-        blobShape = (int(self.blobSizes[0]
-                     * self.aspectRatio
-                    #  * self.detectionAreaSizeMultiplier
-                    ),
-                    int(self.blobSizes[0]
-                    # * self.detectionAreaSizeMultiplier
-                    ))
+        blobShape = (
+            int(self.blobSizes[0]
+                * self.aspectRatio
+                #  * self.detectionAreaSizeMultiplier
+            ),
+            int(self.blobSizes[0]
+                # * self.detectionAreaSizeMultiplier
+            ))
         blob = cv2.dnn.blobFromImage(frame, 1/255.0, blobShape, 127.5)
         self.net.setInput(blob)
         detections = self.net.forward()
