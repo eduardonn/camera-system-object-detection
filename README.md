@@ -9,22 +9,21 @@ A partir do aplicativo Android, é possível receber as notificações e visuali
 ## Screenshots
 
 ### Principal
-<img src="ss/Interface_Principal.png">
+<img src="sreenshots/Interface_Principal.png">
 
 ### Gerenciamento de Gatilhos
-<img src="ss/Interface_Gerenciamento_Gatilhos.png">
+<img src="sreenshots/Interface_Gerenciamento_Gatilhos.png">
 
 ### Adicionar Gatilhos
-<img src="ss/Interface_Adicionar_Gatilho.png">
+<img src="sreenshots/Interface_Adicionar_Gatilho.png">
 
 ### Interface Android
-<img src="ss/Interfaces_Android.png">
+<img src="sreenshots/Interfaces_Android.png">
 
 ## Tecnologias Utilizadas
 
 | Nome                        | Uso                       |
 | --------------------------- | ------------------------- |
-| [** PyQt5 **](https://www.riverbankcomputing.com/software/pyqt/) | Interface para Windows |
-| [** OpenCV **](https://opencv.org/) | Manipulação de Imagens e Aplicação da Rede Neural |
-| [** Flutter **](https://flutter.dev/) | Interface para Android |
-| [**  **]() |  |
+| [**PyQt5**](https://www.riverbankcomputing.com/software/pyqt/) | Interface para Windows |
+| [**OpenCV**](https://opencv.org/) | Manipulação de Imagens e Aplicação da Rede Neural |
+| [**Flutter**](https://flutter.dev/) | Interface para Android |
