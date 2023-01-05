@@ -18,7 +18,7 @@ A partir do aplicativo Android, é possível receber as notificações e visuali
 #### Adicionar Gatilhos
 <img src="screenshots/Interface_Adicionar_Gatilho.png" width="100%">
 
-#### Interface Android
+### Interface Android
 <img src="screenshots/Interfaces_Android.png" width="100%">
 
 ## Tecnologias Utilizadas
