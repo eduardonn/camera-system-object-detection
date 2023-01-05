@@ -9,16 +9,16 @@ A partir do aplicativo Android, é possível receber as notificações e visuali
 ## Screenshots
 
 ### Principal
-<img src="sreenshots/Interface_Principal.png">
+<img src="./sreenshots/Interface_Principal.png">
 
 ### Gerenciamento de Gatilhos
-<img src="sreenshots/Interface_Gerenciamento_Gatilhos.png">
+<img src="./sreenshots/Interface_Gerenciamento_Gatilhos.png">
 
 ### Adicionar Gatilhos
-<img src="sreenshots/Interface_Adicionar_Gatilho.png">
+<img src="./sreenshots/Interface_Adicionar_Gatilho.png">
 
 ### Interface Android
-<img src="sreenshots/Interfaces_Android.png">
+<img src="./sreenshots/Interfaces_Android.png">
 
 ## Tecnologias Utilizadas
 
