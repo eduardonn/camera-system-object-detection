@@ -4,13 +4,13 @@ from PyQt5.QtWidgets import QApplication, QWidget
 from PyQt5.QtGui import QPixmap, QImage, QIcon, QCursor
 from PyQt5.QtCore import Qt, pyqtSignal
 from image_manager import ImageManager
-from gatilhos_window import TriggersWindow
+from triggers_window import TriggersWindow
 from area_painter import AreaPainter
 from server import ServerConnection
 from image_widget import ImageWidget
 from detector import SSDDetector
-from blob_size_tester import BlobSizeTester as dt
-import layout, gatilhos, css
+from helpers.blob_size_tester import BlobSizeTester as dt
+import layout, triggers, css
 
 class GUI(QWidget):
     setImagePixmapSignal = pyqtSignal(ImageWidget, QPixmap)
@@ -21,8 +21,8 @@ class GUI(QWidget):
         self.filePath = __file__[:-len(os.path.basename(__file__))]
         self.camImgs = []
         self.bVisualizarAreas = True
-        self.gatilhosThread = gatilhos.initGatilhos(self.updateGatilhoState)
-        self.detector = SSDDetector(gatilhos.updateGatilhosAfterDetection)
+        self.triggersThread = triggers.initTriggers(self.updateTriggerState)
+        self.detector = SSDDetector(triggers.updateTriggersAfterDetection)
         self.detector.start()
         self.imgManager = ImageManager(maxBufferSize=10)
         self.imgManager.onVideoEnd.append(self.detector.benchmark.printStatistics)
@@ -113,14 +113,8 @@ class GUI(QWidget):
         frameWithDetections = self.detector.drawDetections(frame)
         frame1 = cv2.resize(frameWithDetections, self.camImgShape)
            
-        if self.checkboxViewGatilhos.isChecked():
+        if self.checkboxViewTriggers.isChecked():
             frame1 = self.areaPainter.paintAreasMainImg(frame1)
-            # frameWithDetections = self.areaPainter.paintAreasMainImg(frameWithDetections)
-
-        # cv2.imshow('frame', frame1)
-        # if cv2.waitKey(1) & 0xFF == ord('q'):
-        #     os._exit(0)
-        # return
 
         height, width, _ = frame1.shape
         bytesPerLine = 3 * width
@@ -148,20 +142,20 @@ class GUI(QWidget):
     def setImagePixmap(self, img, pixmap):
         img.setPixmap(pixmap)
 
-    def updateGatilhoState(self, gatilho: gatilhos.Trigger, state):
-        if gatilho.widget is not None:
-            gatilho.widget.setStyleSheet(css.gatilhoAcionado if state else css.gatilhoPadrao)
+    def updateTriggerState(self, trigger: triggers.Trigger, state):
+        if trigger.widget is not None:
+            trigger.widget.setStyleSheet(css.triggerFired if state else css.triggerStandard)
 
-        self.server.fireTrigger(gatilho)
+        self.server.fireTrigger(trigger)
 
     def setSilenceAlarm(value: bool) -> None:
-        gatilhos.Trigger.isAlarmSilenced = value
+        triggers.Trigger.isAlarmSilenced = value
 
     def keyPressEvent(self, e):
         if e.key() == Qt.Key_2:
-            self.server.sendNotification(gatilhos.triggerList[0])
+            self.server.sendNotification(triggers.triggersList[0])
         elif e.key() == Qt.Key_3:
-            self.server.sendAlarm(gatilhos.triggerList[0])
+            self.server.sendAlarm(triggers.triggersList[0])
         elif e.key() == Qt.Key_4:
             self.imgManager.togglePauseVideo()
         elif e.key() == Qt.Key_5:
@@ -183,8 +177,8 @@ class GUI(QWidget):
             self.lClientConnectedValue.setText('Disconnected')
             self.lClientConnectedValue.setStyleSheet(css.textRed)
 
-    def openGatilhosWindow(self):
-        self.gatilhosWindow = TriggersWindow(self)
+    def openTriggersWindow(self):
+        self.triggersWindow = TriggersWindow(self)
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)

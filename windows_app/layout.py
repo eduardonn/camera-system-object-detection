@@ -5,52 +5,53 @@ from PyQt5.QtGui import QCursor, QIcon, QIntValidator
 from PyQt5.QtCore import Qt
 from image_widget import ImageWidget
 import css
+import typing
+if typing.TYPE_CHECKING:
+    from main import GUI
+    from triggers import Trigger
+    from add_trigger_window import AddTriggerWindow
+    from triggers_window import TriggersWindow
 
 filePath = __file__[:-len(os.path.basename(__file__))]
 
-def initMainWindowLayout(UI):
+def initMainWindowLayout(UI: "GUI"):
     UI.setGeometry(50, 50, 1250, 660)
-    # UI.setFixedSize(1150, 620)
     UI.setObjectName('window')
     UI.setStyleSheet(css.windowStyle)
 
-    # Button gatilhos
-    btnGatilhos = QPushButton("Gatilhos")
-    btnGatilhos.setStyleSheet(css.btnStyle)
-    btnGatilhos.setMaximumWidth(200)
-    btnGatilhos.clicked.connect(UI.openGatilhosWindow)
+    # Button triggers
+    btnTriggers = QPushButton("Triggers")
+    btnTriggers.setStyleSheet(css.btnStyle)
+    btnTriggers.setMaximumWidth(200)
+    btnTriggers.clicked.connect(UI.openTriggersWindow)
 
-    # CheckBox visualizar detecções
-    UI.checkboxViewGatilhos = QCheckBox('Visualizar Gatilhos')
-    UI.checkboxViewGatilhos.setStyleSheet(css.checkBoxStyle)
+    # CheckBox show triggers
+    UI.checkboxViewTriggers = QCheckBox('Show Triggers')
+    UI.checkboxViewTriggers.setStyleSheet(css.checkBoxStyle)
     
-    # CheckBox ajustar blob size
-    checkboxBlobSize = QCheckBox('Ajustar Blob Size')
+    # CheckBox adjust blob size
+    checkboxBlobSize = QCheckBox('Adjust Blob Size')
     checkboxBlobSize.setStyleSheet(css.checkBoxStyle)
     checkboxBlobSize.clicked.connect(UI.onCheckboxAjustarBlobSizeClick)
-    # UI.checkboxViewGatilhos.setChecked(True)
+    # UI.checkboxViewTriggers.setChecked(True)
 
-    # CheckBox silenciar alarme
-    checkboxSilenciarAlarme = QCheckBox('Silenciar Alarme')
-    checkboxSilenciarAlarme.setStyleSheet(css.checkBoxStyle)
-    checkboxSilenciarAlarme.clicked.connect(UI.setSilenceAlarm)
+    # CheckBox silence alarm
+    checkboxSilenceAlarms = QCheckBox('Silence Alarms')
+    checkboxSilenceAlarms.setStyleSheet(css.checkBoxStyle)
+    checkboxSilenceAlarms.clicked.connect(UI.setSilenceAlarm)
 
     # Image
     UI.camImgs.append(ImageWidget(UI.handleImageClick))
     UI.camImgs[0].setStyleSheet(css.imageStyle)
-    # UI.camImgs[0].setScaledContents(True)
-    # UI.camImgs[0].setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Ignored)
     UI.camImgs.append(ImageWidget(UI.handleImageClick))
     UI.camImgs[1].setStyleSheet(css.imageStyle)
-    # UI.camImgs[1].setScaledContents(True)
-    # UI.camImgs[1].setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Ignored)
 
     # Labels
-    lClientConnected = QLabel('Cliente: ')
+    lClientConnected = QLabel('Client: ')
     UI.lClientConnectedValue = QLabel('Disconnected')
     UI.lClientConnectedValue.setStyleSheet(css.textRed)
-    lImg1BlobSize = QLabel('Blob Size Imagem 1:')
-    lImg2BlobSize = QLabel('Blob Size Imagem 2:')
+    lImg1BlobSize = QLabel('Blob Size Image 1:')
+    lImg2BlobSize = QLabel('Blob Size Image 2:')
     lSettings = QLabel('Settings')
 
     # Slider
@@ -93,15 +94,15 @@ def initMainWindowLayout(UI):
     hBoxImg2BlobSize = QHBoxLayout()
     hBoxBlobSizeAjuste = QHBoxLayout()
     hBoxClientInfo = QHBoxLayout()
-    hBoxTop.addWidget(btnGatilhos)
+    hBoxTop.addWidget(btnTriggers)
     hBoxImg1BlobSize.addWidget(lImg1BlobSize)
     hBoxImg1BlobSize.addWidget(UI.inputBlobSize[0], alignment=Qt.AlignLeft)
     hBoxImg2BlobSize.addWidget(lImg2BlobSize)
     hBoxImg2BlobSize.addWidget(UI.inputBlobSize[1], alignment=Qt.AlignLeft)
     vBoxSettings.addWidget(lSettings, alignment=Qt.AlignTop | Qt.AlignCenter)
-    vBoxSettings.addWidget(UI.checkboxViewGatilhos)
+    vBoxSettings.addWidget(UI.checkboxViewTriggers)
     vBoxSettings.addWidget(checkboxBlobSize)
-    vBoxSettings.addWidget(checkboxSilenciarAlarme)
+    vBoxSettings.addWidget(checkboxSilenceAlarms)
     hBoxBlobSizeAjuste.addWidget(UI.personTesterSizeSlider)
     hBoxBlobSizeAjuste.addWidget(UI.lPersonSize)
     vBoxSettings.addLayout(hBoxBlobSizeAjuste)
@@ -123,28 +124,27 @@ def initMainWindowLayout(UI):
     UI.setLayout(vBoxMain)
     UI.show()
 
-def gatilhosWindowLayout(UI):
+def triggersWindowLayout(UI: "TriggersWindow"):
     UI.setObjectName('window')
     UI.setStyleSheet(css.windowStyle)
 
     # Buttons
-    btnAdd = QPushButton("Adicionar Gatilho")
+    btnAdd = QPushButton("Add Trigger")
     btnAdd.clicked.connect(UI.openDrawAreaWindow)
     btnAdd.setMinimumWidth(150)
     btnAdd.setStyleSheet(css.btnStyle)
-    btnVoltar = QPushButton("Voltar")
-    btnVoltar.clicked.connect(UI.close)
-    # btnVoltar.setMinimumWidth(100)
-    btnVoltar.setStyleSheet(css.btnStyle)
+    btnBack = QPushButton("Back")
+    btnBack.clicked.connect(UI.close)
+    btnBack.setStyleSheet(css.btnStyle)
 
     # Labels
-    lTriggersList = QLabel("Lista de Gatilhos")
+    lTriggersList = QLabel("Triggers List")
     scrollArea = QScrollArea()
-    listaGatilhos = QWidget()
+    triggersList = QWidget()
 
     # Layout organization
     vBoxMain = QVBoxLayout()
-    UI.vBoxGatilhos = QVBoxLayout()
+    UI.vBoxTriggers = QVBoxLayout()
 
     scrollArea.setStyleSheet(css.scrollAreaStyle)
     scrollArea.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
@@ -154,87 +154,87 @@ def gatilhosWindowLayout(UI):
     vBoxMain.addWidget(btnAdd, alignment=Qt.AlignLeft)
     vBoxMain.addWidget(lTriggersList, alignment=Qt.AlignHCenter)
     vBoxMain.addWidget(scrollArea)
-    vBoxMain.addWidget(btnVoltar, alignment=Qt.AlignRight)
+    vBoxMain.addWidget(btnBack, alignment=Qt.AlignRight)
 
-    listaGatilhos.setLayout(UI.vBoxGatilhos)
-    scrollArea.setWidget(listaGatilhos)
+    triggersList.setLayout(UI.vBoxTriggers)
+    scrollArea.setWidget(triggersList)
     UI.setLayout(vBoxMain)
     UI.show()
 
-def addTriggerWindowLayout(UI):
+def addTriggerWindowLayout(UI: "AddTriggerWindow"):
     UI.setObjectName('window')
     UI.setStyleSheet(css.windowStyle)
-    UI.setGeometry(100, 50, 700, 440)
-    UI.setWindowTitle('Adicionar Gatilho')
+    UI.setGeometry(100, 50, 1150, 440)
+    UI.setWindowTitle('Add Trigger')
 
     # Buttons
-    btnConfirm = QPushButton("Confirmar")
+    btnConfirm = QPushButton("Confirm")
     btnConfirm.setMaximumWidth(150)
-    btnConfirm.clicked.connect(UI.salvarGatilhoESair)
+    btnConfirm.clicked.connect(UI.saveTriggerAndQuit)
     btnConfirm.setStyleSheet(css.btnStyle)
 
     # Labels
     UI.camImg = QLabel()
-    lDesenheArea = QLabel("Desenhe a área de detecção")
-    lDesenheArea.setMaximumHeight(20)
-    lNomeGatilho = QLabel("Nome do gatilho")
-    lNomeGatilho.setMaximumHeight(20)
-    lHorarioDisparo = QLabel("Horário de detecção")
-    lHorarioDisparo.setMaximumHeight(20)
-    lTempoAteDisparo = QLabel("Tempo de permanência até disparo")
-    lTempoAteDisparo.setMaximumHeight(20)
-    lSegundos = QLabel("segundos")
-    lSegundos.setMaximumHeight(20)
-    lSegundos.setMinimumWidth(20)
-    lAcao = QLabel("Ação")
-    lAcao.setMaximumHeight(20)
-    lAte = QLabel("até")
-    lAte.setMaximumHeight(20)
-    lAte.setMaximumWidth(20)
+    lDrawArea = QLabel("Draw detection area")
+    lDrawArea.setMaximumHeight(20)
+    lTriggerName = QLabel("Name")
+    lTriggerName.setMaximumHeight(20)
+    lDetectionTime = QLabel("Active Time")
+    lDetectionTime.setMaximumHeight(20)
+    lMaxStayTime = QLabel("Maximum Stay Time")
+    lMaxStayTime.setMaximumHeight(20)
+    lSeconds = QLabel("seconds")
+    lSeconds.setMaximumHeight(20)
+    lSeconds.setMinimumWidth(20)
+    lAction = QLabel("Action")
+    lAction.setMaximumHeight(20)
+    lUntil = QLabel("until")
+    lUntil.setMaximumHeight(20)
+    lUntil.setMaximumWidth(40)
 
     # Input widgets
-    UI.nomeGatilho = QLineEdit()
-    UI.nomeGatilho.setStyleSheet(css.textBlack)
-    UI.tipoAlarme = QComboBox()
-    UI.tipoAlarme.addItem('Alarme')
-    UI.tipoAlarme.addItem('Notificação')
-    UI.tipoAlarme.setStyleSheet(css.textBlack)
-    UI.timeFrom = QTimeEdit()
-    UI.timeFrom.setStyleSheet(css.textBlack)
-    UI.timeTo = QTimeEdit()
-    UI.timeTo.setStyleSheet(css.textBlack)
-    UI.timePermanencia = QLineEdit()
-    UI.timePermanencia.setStyleSheet(css.textBlack)
+    UI.inputTriggerName = QLineEdit()
+    UI.inputTriggerName.setStyleSheet(css.textBlack)
+    UI.inputAction = QComboBox()
+    UI.inputAction.addItem('Alarm')
+    UI.inputAction.addItem('Notification')
+    UI.inputAction.setStyleSheet(css.textBlack)
+    UI.inputTimeFrom = QTimeEdit()
+    UI.inputTimeFrom.setStyleSheet(css.textBlack)
+    UI.inputTimeTo = QTimeEdit()
+    UI.inputTimeTo.setStyleSheet(css.textBlack)
+    UI.inputMaxStayTime = QLineEdit()
+    UI.inputMaxStayTime.setStyleSheet(css.textBlack)
 
     # Layout organization
     vBoxMain = QVBoxLayout()
     hBoxMain = QHBoxLayout()
     vBoxRight = QVBoxLayout()
     hBoxTime = QHBoxLayout()
-    hBoxTempoDisparo = QHBoxLayout()
-    vBoxMain.addWidget(lDesenheArea)
+    hBoxMaxStayTime = QHBoxLayout()
+    vBoxMain.addWidget(lDrawArea)
     vBoxMain.addLayout(hBoxMain)
     hBoxMain.addWidget(UI.camImg, alignment=Qt.AlignLeft)
     hBoxMain.addLayout(vBoxRight)
-    vBoxRight.addWidget(lNomeGatilho)
-    vBoxRight.addWidget(UI.nomeGatilho)
-    vBoxRight.addWidget(lHorarioDisparo)
+    vBoxRight.addWidget(lTriggerName)
+    vBoxRight.addWidget(UI.inputTriggerName)
+    vBoxRight.addWidget(lDetectionTime)
     vBoxRight.addLayout(hBoxTime)
-    hBoxTime.addWidget(UI.timeFrom)
-    hBoxTime.addWidget(lAte)
-    hBoxTime.addWidget(UI.timeTo)
-    vBoxRight.addWidget(lTempoAteDisparo)
-    vBoxRight.addLayout(hBoxTempoDisparo)
-    hBoxTempoDisparo.addWidget(UI.timePermanencia)
-    hBoxTempoDisparo.addWidget(lSegundos)
-    vBoxRight.addWidget(lAcao)
-    vBoxRight.addWidget(UI.tipoAlarme)
+    hBoxTime.addWidget(UI.inputTimeFrom)
+    hBoxTime.addWidget(lUntil)
+    hBoxTime.addWidget(UI.inputTimeTo)
+    vBoxRight.addWidget(lMaxStayTime)
+    vBoxRight.addLayout(hBoxMaxStayTime)
+    hBoxMaxStayTime.addWidget(UI.inputMaxStayTime)
+    hBoxMaxStayTime.addWidget(lSeconds)
+    vBoxRight.addWidget(lAction)
+    vBoxRight.addWidget(UI.inputAction)
     vBoxRight.addWidget(btnConfirm, alignment=Qt.AlignBottom | Qt.AlignCenter)
 
     UI.setLayout(vBoxMain)
     UI.show()
 
-def addTriggerOnViewList(UI, trigger):
+def addTriggerOnViewList(UI: "TriggersWindow", trigger: "Trigger"):
     trigger.widget = triggerBackground = QWidget()
     triggerBackground.setObjectName('triggerBackground')
     
@@ -252,47 +252,46 @@ def addTriggerOnViewList(UI, trigger):
     btnReset.setStyleSheet(css.btnTriggerStyle)
 
     # Trigger style
-    if trigger.acionado:
-        triggerBackground.setStyleSheet(css.gatilhoAcionado)
+    if trigger.fired:
+        triggerBackground.setStyleSheet(css.triggerFired)
     else:
-        triggerBackground.setStyleSheet(css.gatilhoPadrao)
+        triggerBackground.setStyleSheet(css.triggerStandard)
 
     # Labels
-    lNomeGatilho = QLabel(trigger.nome if trigger.nome != '' else 'Gatilho ' + str(trigger.id))
-    lNomeGatilho.setStyleSheet(css.titulo)
-    lAcao = QLabel("Ação: " + trigger.acao)
-    lTempoPermanencia = QLabel("Tempo de permanência: " + str(trigger.tempoPermanencia))
-    lHorarios = QLabel("Horário de detecção:")
-    lHorariosValues = QLabel(trigger.initialTime + ' até ' + trigger.finalTime)
-    lTempoPermaneceuDescricao = QLabel('Tempo Permaneceu:')
-    # lTempoPermaneceuDescricao.setSizePolicy(Qt.QSizePolicy.Fixed)
-    trigger.lTempoPermaneceu = QLabel(str(round(trigger.tempoPermaneceu, 3)))
+    lTriggerName = QLabel(trigger.name if trigger.name != '' else 'Trigger ' + str(trigger.id))
+    lTriggerName.setStyleSheet(css.title)
+    lAction = QLabel("Action: " + trigger.action)
+    lMaxStayTime = QLabel("Maximum Stay Time: " + str(trigger.maxStayTime))
+    lActiveTime = QLabel("Active Time:")
+    lActiveTimeValues = QLabel(trigger.initialTime + ' até ' + trigger.finalTime)
+    lStayedTime = QLabel('Stayed Time:')
+    trigger.lStayedTime = QLabel(str(round(trigger.stayedTime, 3)))
 
     # Layout organization
-    vBoxMain = QVBoxLayout(triggerBackground) # QVBoxLayout com QWidget como parent para estilizar o layout
+    vBoxMain = QVBoxLayout(triggerBackground) # QVBoxLayout with QWidget as parent to style the layout
     hBoxInfo = QHBoxLayout()
     hBoxTop = QHBoxLayout()
     vBoxLeft = QVBoxLayout()
-    vBoxTempoPermanencia = QVBoxLayout()
-    hBoxTempoPermaneceu = QHBoxLayout()
-    hBoxHorarios = QHBoxLayout()
+    vBoxStayTime = QVBoxLayout()
+    hBoxStayedTime = QHBoxLayout()
+    hBoxDetectionTime = QHBoxLayout()
     vBoxBtnReset = QVBoxLayout()
-    UI.vBoxGatilhos.addWidget(triggerBackground)
-    hBoxTop.addWidget(lNomeGatilho, alignment=Qt.AlignTop)
+    UI.vBoxTriggers.addWidget(triggerBackground)
+    hBoxTop.addWidget(lTriggerName, alignment=Qt.AlignTop)
     hBoxTop.addWidget(btnDelete, alignment=Qt.AlignRight)
     hBoxInfo.setAlignment(Qt.AlignTop)
-    vBoxLeft.addWidget(lAcao, alignment=Qt.AlignTop)
-    vBoxTempoPermanencia.addWidget(lTempoPermanencia, alignment=Qt.AlignRight)
-    vBoxTempoPermanencia.addLayout(hBoxTempoPermaneceu)
-    vBoxTempoPermanencia.setAlignment(Qt.AlignRight)
-    hBoxTempoPermaneceu.addWidget(lTempoPermaneceuDescricao)
-    hBoxTempoPermaneceu.addWidget(trigger.lTempoPermaneceu)
-    hBoxHorarios.addWidget(lHorarios)
-    hBoxHorarios.addWidget(lHorariosValues)
+    vBoxLeft.addWidget(lAction, alignment=Qt.AlignTop)
+    vBoxStayTime.addWidget(lMaxStayTime, alignment=Qt.AlignRight)
+    vBoxStayTime.addLayout(hBoxStayedTime)
+    vBoxStayTime.setAlignment(Qt.AlignRight)
+    hBoxStayedTime.addWidget(lStayedTime)
+    hBoxStayedTime.addWidget(trigger.lStayedTime)
+    hBoxDetectionTime.addWidget(lActiveTime)
+    hBoxDetectionTime.addWidget(lActiveTimeValues)
     vBoxBtnReset.addWidget(btnReset, alignment=Qt.AlignBottom)
-    vBoxLeft.addLayout(hBoxHorarios)
+    vBoxLeft.addLayout(hBoxDetectionTime)
     vBoxMain.addLayout(hBoxTop)
     vBoxMain.addLayout(hBoxInfo)
     hBoxInfo.addLayout(vBoxLeft)
-    hBoxInfo.addLayout(vBoxTempoPermanencia)
+    hBoxInfo.addLayout(vBoxStayTime)
     hBoxInfo.addLayout(vBoxBtnReset)

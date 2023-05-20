@@ -1,15 +1,15 @@
 import sys
 import os
 from PyQt5.QtWidgets import QApplication, QWidget
-from PyQt5.QtGui import QIcon, QFont
+from PyQt5.QtGui import QIcon
 from PyQt5.QtCore import Qt, pyqtSignal
 from add_trigger_window import AddTriggerWindow
 import layout
-import gatilhos
+import triggers
 import css
 
 class TriggersWindow(QWidget):
-    resetTriggerUI = pyqtSignal(gatilhos.Trigger)
+    resetTriggerUI = pyqtSignal(triggers.Trigger)
 
     def __init__(self, mainWindow):
         super().__init__()
@@ -17,16 +17,16 @@ class TriggersWindow(QWidget):
         self.mainWindow = mainWindow
         
         self.setGeometry(300, 200, 700, 440)
-        self.setWindowTitle('Gatilhos')
+        self.setWindowTitle('Triggers')
         filePath = __file__[:-len(os.path.basename(__file__))]
-        self.setWindowIcon(QIcon(filePath + '/Assets/GatilhosIcone.png'))
+        self.setWindowIcon(QIcon(filePath + '/Assets/TriggersIcone.png'))
 
-        layout.gatilhosWindowLayout(self)
+        layout.triggersWindowLayout(self)
 
-        gatilhos.Trigger.triggersWindow = self # Cria uma variável estática referenciando esta instância
+        triggers.Trigger.triggersWindow = self
         
-        for gatilho in gatilhos.triggerList:
-            layout.addTriggerOnViewList(self, gatilho)
+        for trigger in triggers.triggersList:
+            layout.addTriggerOnViewList(self, trigger)
 
     def keyPressEvent(self, e):
         if e.key() == Qt.Key_Q:
@@ -37,7 +37,7 @@ class TriggersWindow(QWidget):
 
 def resetTriggerStyle(trigger):
     if trigger.widget is not None:
-        trigger.widget.setStyleSheet(css.gatilhoPadrao)
+        trigger.widget.setStyleSheet(css.triggerStandard)
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)

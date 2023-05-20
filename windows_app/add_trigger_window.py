@@ -3,7 +3,7 @@ import cv2 as cv
 from PyQt5.QtWidgets import QWidget
 from PyQt5.QtGui import QPixmap, QImage, QIcon, QFont
 from PyQt5.QtCore import Qt, pyqtSignal
-import gatilhos
+import triggers
 import layout
 import css
 from image_manager import ImageManager
@@ -12,13 +12,13 @@ from area_painter import AreaPainter
 class AddTriggerWindow(QWidget):
     setImageSignal = pyqtSignal(QPixmap)
 
-    def __init__(self, gatilhosWindow):
+    def __init__(self, triggersWindow):
         super().__init__()
-        self.gatilhosWindow = gatilhosWindow
+        self.triggersWindow = triggersWindow
         self.setImageSignal.connect(lambda pixmap: self.camImg.setPixmap(pixmap))
         
         filePath = __file__[:-len(os.path.basename(__file__))]
-        self.setWindowIcon(QIcon(filePath + '/Assets/GatilhosIcone.png'))
+        self.setWindowIcon(QIcon(filePath + '/Assets/TriggersIcon.png'))
         self.bDrawing = False
 
         layout.addTriggerWindowLayout(self)
@@ -61,7 +61,7 @@ class AddTriggerWindow(QWidget):
     def updateFrame(self, frame):
         # h, w = ImageManager.frame.shape[:2]
         frameResized = cv.resize(frame, self.camImgShape)
-        self.areaPainter.paintAreasAddGatilho(frameResized)
+        self.areaPainter.paintAreasAddTrigger(frameResized)
 
         height, width, _ = frameResized.shape
         bytesPerLine = 3 * width
@@ -70,24 +70,24 @@ class AddTriggerWindow(QWidget):
 
         self.setImageSignal.emit(image)
 
-    def salvarGatilhoESair(self):
+    def saveTriggerAndQuit(self):
         try:
-            float(self.timePermanencia.text())
+            float(self.inputMaxStayTime.text())
         except:
-            print('Tempo de permanência inválido:', self.timePermanencia.text())
+            print('Invalid stay time:', self.inputMaxStayTime.text())
             return
 
-        if self.timePermanencia.text() == '':
-            print('Tempo de permanência obrigatório')
+        if self.inputMaxStayTime.text() == '':
+            print('Stay time obligatory')
             return
 
         if len(self.areaPainter.areas) == 0:
-            print("Não há áreas desenhadas")
+            print("No areas were drawn")
             return
 
         if (self.areaPainter.areas[0][0][0] - self.areaPainter.areas[0][1][0] >= 0
             or self.areaPainter.areas[0][0][1] - self.areaPainter.areas[0][1][1] >= 0):
-            print('Área inválida. Desenhe novamente.')
+            print('Invalid Area. Draw again.')
             return
 
         # Normaliza areas
@@ -96,17 +96,17 @@ class AddTriggerWindow(QWidget):
         areaEndX = self.areaPainter.areas[0][1][0] / self.camImgShape[0]
         areaEndY = self.areaPainter.areas[0][1][1] / self.camImgShape[1]
 
-        gatilhos.createGatilho(
-            self.nomeGatilho.text(),
-            self.timeFrom.time().toString()[:-3],
-            self.timeTo.time().toString()[:-3],
-            float(self.timePermanencia.text()),
-            self.tipoAlarme.currentText(),
+        triggers.createTrigger(
+            self.inputTriggerName.text(),
+            self.inputTimeFrom.time().toString()[:-3],
+            self.inputTimeTo.time().toString()[:-3],
+            float(self.inputMaxStayTime.text()),
+            self.inputAction.currentText(),
             areaStartX,
             areaStartY,
             areaEndX,
             areaEndY)
 
-        self.gatilhosWindow.mainWindow.detector.updateDetectionArea()
+        self.triggersWindow.mainWindow.detector.updateDetectionArea()
 
         self.close()

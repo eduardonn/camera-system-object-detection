@@ -1,10 +1,10 @@
 """
-Gatilhos
+Triggers
 ========
 
-1. Define classe Gatilho
-2. Mantém lista de gatilhos
-3. Atualiza gatilhos periodicamente
+1. Define class Trigger
+2. Manage triggers list
+3. Update triggers periodically
 """
 
 import numpy as np
@@ -18,8 +18,6 @@ from PyQt5.QtCore import QThread, pyqtSignal
 import database as db
 import layout
 
-triggerList = []
-
 class Trigger:
     soundThread = None
     triggersWindow = None
@@ -30,66 +28,62 @@ class Trigger:
     def __init__(
             self,
             id,
-            nome,
+            name,
             initialTime,
             finalTime,
-            tempoPermanencia,
-            acao,
+            maxStayTime,
+            action,
             areaStartX,
             areaStartY,
             areaEndX,
             areaEndY):
         self.id = id
-        self.nome = nome
+        self.name = name
         self.initialTime = initialTime
         self.finalTime = finalTime
-        self.tempoPermanencia = tempoPermanencia
-        self.acao = acao
+        self.maxStayTime = maxStayTime
+        self.action = action
         self.areaStartX = areaStartX
         self.areaStartY = areaStartY
         self.areaEndX = areaEndX
         self.areaEndY = areaEndY
-        self.labelTempoPermaneceu = 0
-        self.tempoPermaneceu = .0
-        self.acionado = False
+        self.stayedTime = .0
+        self.fired = False
         self.detectionLastTime = -math.inf
         self.timeSinceLastUpdate = time.time()
         self.incrementLastTime = -math.inf
         self.bDetectionInside = False
         self.widget = None
-        self.lTempoPermaneceu = None
+        self.lStayedTime = None
         self.camera = 0
 
     def remove(self):
-        print("removendo id:", self.id)
-
-        db.deleteGatilho(self.id)
-        self.triggersWindow.vBoxGatilhos.removeWidget(self.widget)
-        triggerList.remove(self)
+        db.deleteTrigger(self.id)
+        self.triggersWindow.vBoxTriggers.removeWidget(self.widget)
+        triggersList.remove(self)
         sip.delete(self.widget)
         self.widget = None
-        db.printDB()
 
     def reset(self):
-        self.tempoPermaneceu = 0.
+        self.stayedTime = 0.
         self.timeSinceLastUpdate = 0.
-        self.acionado = False
+        self.fired = False
         Trigger.shouldPlaySound = False
 
         if self.widget is not None:
             self.triggersWindow.resetTriggerUI.emit(self)
 
-        if self.lTempoPermaneceu is not None:
-            self.lTempoPermaneceu.setText(str(round(self.tempoPermaneceu, 3)))
+        if self.lStayedTime is not None:
+            self.lStayedTime.setText(str(round(self.stayedTime, 3)))
 
     def print(self):
-        print('GATILHO:',
+        print('TRIGGER:',
                 self.id,
-                self.nome,
+                self.name,
                 self.initialTime,
                 self.finalTime,
-                self.tempoPermanencia,
-                self.acao,
+                self.maxStayTime,
+                self.action,
                 self.areaStartX,
                 self.areaStartY,
                 self.areaEndX,
@@ -114,18 +108,18 @@ class Trigger:
 
         Trigger.shouldPlaySound = False
 
-class UpdateGatilhosPeriodicallyThread(QThread):
-    '''Atualiza gatilhos a cada THREAD_TIME_SLEEP segundos'''
-    changeGatilhoStateSignal = pyqtSignal(Trigger, bool) # Necessário pois mudanças na UI devem ocorrer na thread principal
+class UpdateTriggersPeriodicallyThread(QThread):
+    '''Update triggers every THREAD_TIME_SLEEP seconds'''
+    changeTriggerStateSignal = pyqtSignal(Trigger, bool) # Changes in UI need to happen in main thread
     isPlayingSound = False
 
     def run(self):
-        THREAD_TIME_SLEEP = 0.1 # Tempo (em segundos) que a thread irá dormir e incrementar o tempo que detecções permaneceram
-        MAX_TIME_INC_LAST_DETECTION = 1.0 # Continuar incrementando o tempo que permaneceu até esse tempo (em segundos)
-        TIME_LIMIT_TO_RESET = 10 # Se passar esse tempo (em segundos) sem detecção no gatilho, ele resetará
+        THREAD_TIME_SLEEP = 0.1 # Time (in seconds) in which the thread will sleep and increase stayed times
+        MAX_TIME_INC_LAST_DETECTION = 1.0 # Keep increasing stayed time until x seconds without detection
+        TIME_LIMIT_TO_RESET = 10 # Time without detections until trigger reset
 
         while True:
-            for trigger in triggerList:
+            for trigger in triggersList:
                 timeSinceLastDetection = time.time() - trigger.detectionLastTime
                 timeSinceLastIncrement = time.time() - trigger.incrementLastTime
                 trigger.incrementLastTime = time.time()
@@ -137,25 +131,25 @@ class UpdateGatilhosPeriodicallyThread(QThread):
 
                     continue
 
-                trigger.tempoPermaneceu += timeSinceLastIncrement
+                trigger.stayedTime += timeSinceLastIncrement
 
-                if trigger.lTempoPermaneceu is not None:
-                    trigger.lTempoPermaneceu.setText(str(round(trigger.tempoPermaneceu, 3)))
+                if trigger.lStayedTime is not None:
+                    trigger.lStayedTime.setText(str(round(trigger.stayedTime, 3)))
                 
-                if trigger.acionado: continue
+                if trigger.fired: continue
 
-                if trigger.tempoPermaneceu > trigger.tempoPermanencia and not trigger.acionado:
-                    trigger.acionado = True
-                    print(f'GATILHO [{trigger.nome}] DISPAROU')
+                if trigger.stayedTime > trigger.maxStayTime and not trigger.fired:
+                    trigger.fired = True
+                    print(f'TRIGGER [{trigger.name}] FIRED')
 
                     if not Trigger.isAlarmSilenced:
                         Trigger.startAlarmSound()
 
-                    self.changeGatilhoStateSignal.emit(trigger, True)
+                    self.changeTriggerStateSignal.emit(trigger, True)
 
             time.sleep(THREAD_TIME_SLEEP)
 
-def updateGatilhosAfterDetection(detections):
+def updateTriggersAfterDetection(detections):
     anyDetection = False
     for i in np.arange(0, detections.shape[2]):
         idx = int(detections[0, 0, i, 1])
@@ -168,40 +162,42 @@ def updateGatilhosAfterDetection(detections):
 
             timeNow = datetime.now()
             
-            global triggerList
-            for trigger in triggerList:
+            global triggersList
+            for trigger in triggersList:
                 if testHorario(trigger, timeNow) and testBoundingBox(trigger, *boundingBox):
-                    trigger.tempoPermaneceuBeforeDetection = trigger.tempoPermaneceu
+                    trigger.stayedTimeBeforeDetection = trigger.stayedTime
                     trigger.detectionLastTime = time.time()
                     trigger.bDetectionInside = True
                 else:
                     trigger.bDetectionInside = False
     if not anyDetection:
-        for trigger in triggerList:
+        for trigger in triggersList:
             trigger.bDetectionInside = False
 
-def initGatilhos(updateGatilhoState):
-    global triggerList
-    triggerList.clear()
+triggersList: list[Trigger] = []
 
-    for gatilho in db.selectGatilhos():
-        gatilhoClass = Trigger(*gatilho)
-        triggerList.append(gatilhoClass)
+def initTriggers(updateTriggerState):
+    global triggersList
+    triggersList.clear()
 
-    thread = UpdateGatilhosPeriodicallyThread()
-    thread.changeGatilhoStateSignal.connect(updateGatilhoState)
+    for triggerRow in db.selectTriggers():
+        trigger = Trigger(*triggerRow)
+        triggersList.append(trigger)
+
+    thread = UpdateTriggersPeriodicallyThread()
+    thread.changeTriggerStateSignal.connect(updateTriggerState)
     thread.start()
 
     return thread
 
-def createGatilho(*args):
-    gatilho = Trigger(-1, *args)
-    db.createGatilho(gatilho)
-    layout.addTriggerOnViewList(Trigger.triggersWindow, gatilho)
-    triggerList.append(gatilho)
+def createTrigger(*args):
+    trigger = Trigger(-1, *args)
+    db.createTrigger(trigger)
+    layout.addTriggerOnViewList(Trigger.triggersWindow, trigger)
+    triggersList.append(trigger)
 
 def testHorario(trigger: Trigger, timeNow: datetime) -> bool:
-    '''Testa se o horário de agora está dentro do horário do gatilho'''
+    '''Check if current time is between trigger's active time'''
 
     iniHour = int(trigger.initialTime[:2])
     iniMinute = int(trigger.initialTime[3:])
@@ -218,7 +214,7 @@ def testHorario(trigger: Trigger, timeNow: datetime) -> bool:
     return False
 
 def testBoundingBox(trigger: Trigger, boxStartX: float, boxStartY: float, boxEndX: float, boxEndY: float) -> bool:
-    '''Testa se a detecção está dentro da área do gatilho'''
+    '''Test if detection is inside trigger'''
     xThreshold = 0.01041
     yThreshold = 0.0185
 

@@ -1,59 +1,50 @@
 import sqlite3
 
-def createGatilho(gatilho):
-    conn = sqlite3.connect('Gatilhos.db')
+def createTrigger(trigger):
+    conn = sqlite3.connect('Triggers.db')
     cursor = conn.cursor()
-    cursor.execute('INSERT INTO gatilhos values (?,?,?,?,?,?,?,?,?)', (
-                    gatilho.nome,
-                    gatilho.initialTime,
-                    gatilho.finalTime,
-                    gatilho.tempoPermanencia,
-                    gatilho.acao,
-                    gatilho.areaStartX,
-                    gatilho.areaStartY,
-                    gatilho.areaEndX,
-                    gatilho.areaEndY))
+    cursor.execute('INSERT INTO triggers values (?,?,?,?,?,?,?,?,?)', (
+                    trigger.name,
+                    trigger.initialTime,
+                    trigger.finalTime,
+                    trigger.maxStayTime,
+                    trigger.action,
+                    trigger.areaStartX,
+                    trigger.areaStartY,
+                    trigger.areaEndX,
+                    trigger.areaEndY))
 
-    gatilho.id = cursor.lastrowid
+    trigger.id = cursor.lastrowid
 
     conn.commit()
     conn.close()
 
-def selectGatilhos():
-    conn = sqlite3.connect('Gatilhos.db')
+def selectTriggers():
+    conn = sqlite3.connect('Triggers.db')
     cursor = conn.cursor()
 
-    # Verifica se a tabela de gatilhos existe
-    cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='gatilhos'")
+    # Check if table exists
+    cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='triggers'")
     if len(cursor.fetchall()) == 0:
-        cursor.execute('CREATE TABLE gatilhos(nome text, timeFrom text, timeTo text, timePermanencia integer, tipoAlarme text, areaStartX integer, areaStartY integer, areaEndX integer, areaEndY integer)')
+        cursor.execute('CREATE TABLE triggers(name text, timeFrom text, timeTo text, stayTime integer, action text, areaStartX integer, areaStartY integer, areaEndX integer, areaEndY integer)')
 
-    cursor.execute('SELECT rowid, * FROM gatilhos')
+    cursor.execute('SELECT rowid, * FROM triggers')
     rows = cursor.fetchall()
 
     conn.close()
 
     return rows
 
-def deleteGatilho(id):
-    conn = sqlite3.connect('Gatilhos.db')
+def deleteTrigger(id):
+    conn = sqlite3.connect('Triggers.db')
     cursor = conn.cursor()
 
-    cursor.execute('DELETE FROM gatilhos WHERE rowid = ?', (id,))
+    cursor.execute('DELETE FROM triggers WHERE rowid = ?', (id,))
 
     conn.commit()
     conn.close()
 
-# def limparBD():
-#     conn = sqlite3.connect('Gatilhos.db')
-#     cursor = conn.cursor()
-
-#     cursor.execute('DELETE FROM gatilhos')
-
-#     conn.commit()
-#     conn.close()
-
 def printDB():
     print('------------------DB------------------')
-    for row in selectGatilhos():
+    for row in selectTriggers():
         print(row)

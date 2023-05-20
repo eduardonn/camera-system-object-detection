@@ -1,10 +1,9 @@
 import ctypes
 from math import ceil
 import socket
-import cv2, base64
+import cv2
 import os, time, json, datetime
-# from threading import Thread
-import keyboard
+from triggers import Trigger
 from image_manager import ImageManager
 from PyQt5.QtCore import QThread, pyqtSignal
 
@@ -22,22 +21,11 @@ class ServerConnection(QThread):
         super(ServerConnection, self).__init__()
         self.serverIP = '0.0.0.0'
         self.onClientUpdate.connect(onClientUpdate)
-        self.triggerQueue = []
-        # self.serverIP = '127.0.0.1'
-        # self.serverIP = '192.168.0.9'
-        # self.clientIP = None
-        # self.sendVideoThread = Thread(target=self.sendVideo, daemon=True)
+        self.triggerQueue: list[Trigger] = []
         self.bSendVideo = False
         self.ImageSocket = None
         self.notifConn = None
         self.imageConn = None
-
-        # self.filePath = __file__[:-len(os.path.basename(__file__))]
-        # self.cap = cv2.VideoCapture(
-        #     'C:/repos/Codes/CameraSurveillanceTCC/WindowsApp/recordings/Estabelecimento1.mp4')
-        # # self.cap = cv2.VideoCapture(1)
-        # frameShape = self.cap.read()[1].shape
-        # self.aspectRatio = (float)(frameShape[0]) / frameShape[1]
         self.aspectRatio = 1080.0 / 1920.0
         self.newImgSize = 500
 
@@ -53,7 +41,6 @@ class ServerConnection(QThread):
             self.notifConn, address = self.NotificationSocket.accept()
             print('[Notifications] GOT CONNECTION FROM:', address)
             self.queryTriggerEvents()
-            # self.clientIP = address[0]
 
             try:
                 self.notifConn.settimeout(self.SEC_UNTIL_TIMEOUT_CONNECTION)
@@ -123,7 +110,6 @@ class ServerConnection(QThread):
 
         # MESSAGE FORMAT: [----: 4 bytes][framesize: 4 bytes][imageFragment: (FRAGMENT_SIZE) bytes]
         data = (b'----'
-                # + bytes(ctypes.c_uint32(frameID))
                 + bytes(ctypes.c_uint32(frameSize))
                 + bytes(frame[:self.FRAGMENT_SIZE]))
 
@@ -157,11 +143,11 @@ class ServerConnection(QThread):
 
         return sock
 
-    def sendNotification(self, trigger):
+    def sendNotification(self, trigger: Trigger):
         print('sending notification')
         try:
             alarmInfo = {
-                'local': trigger.nome,
+                'local': trigger.name,
                 'dateTime': time.mktime(datetime.datetime.now().timetuple()),
             }
             
@@ -176,10 +162,10 @@ class ServerConnection(QThread):
             print('[exception while sending notification]')
             print(e)
 
-    def sendAlarm(self, trigger):
+    def sendAlarm(self, trigger: Trigger):
         try:
             alarmInfo = {
-                'local': trigger.nome,
+                'local': trigger.name,
                 'dateTime': time.mktime(datetime.datetime.now().timetuple()),
             }
             
@@ -187,30 +173,6 @@ class ServerConnection(QThread):
                 data = b'trigger-alarm' + bytes(json.dumps(alarmInfo), encoding='utf-8')
                 self.notifConn.send(data)
                 return True
-
-                #           TRYING TO SEND IMAGE THROUGH NOTIFICATION CONNECTION
-                # frame = cv2.resize(self.cap.read()[1], (self.newImgSize, int(self.newImgSize * self.aspectRatio)))
-                # ret, frameEncoded = cv2.imencode('.jpg', frame)
-                # if not ret:
-                #     print('error encoding on send alarm')
-                #     return
-
-                # frameSize = len(frameEncoded)
-                # numPackets = ceil(frameSize / self.FRAGMENT_SIZE)
-
-                # data = b'frame-packet----' + bytes(ctypes.c_uint32(frameSize)) + bytes(frameEncoded[:self.FRAGMENT_SIZE])
-                        
-                # self.notifConn.send(data)
-
-                # packetID = 1
-                # while(packetID < numPackets):
-                #     fragIni = packetID * self.FRAGMENT_SIZE
-                #     data = b'frame-packet' + bytes(frameEncoded[fragIni:fragIni + self.FRAGMENT_SIZE])
-                #     self.notifConn.send(data)
-                #     packetID += 1
-                #     time.sleep(.02)
-
-                # self.notifConn.send(data)
             else:
                 print('notifConn is None')
                 return False
@@ -222,16 +184,16 @@ class ServerConnection(QThread):
         for trigger in self.triggerQueue:
             self.fireTrigger(trigger)
 
-    def fireTrigger(self, trigger):
+    def fireTrigger(self, trigger: Trigger):
         isSent = True
         try:
             self.triggerQueue.remove(trigger)
         except:
             pass
 
-        if trigger.acao == 'Alarme':
+        if trigger.action == 'Alarm':
             isSent = self.sendAlarm(trigger)
-        elif trigger.acao == 'Notificação':
+        elif trigger.action == 'Notification':
             isSent = self.sendNotification(trigger)
 
         if not isSent:

@@ -1,12 +1,12 @@
 import cv2
 import numpy as np
 from PyQt5.QtGui import QCursor
-import gatilhos
+import triggers
 
 class AreaPainter:
     AREA_COLOR_STANDARD = (0, 255, 0)
     AREA_COLOR_DETECTING = (0, 255, 255)
-    AREA_COLOR_GATILHO_ACIONADO = (0, 0, 255)
+    AREA_COLOR_TRIGGER_FIRED = (0, 0, 255)
     AREA_COLOR_OUTLINE = (80, 0, 80)
     
     def __init__(self):
@@ -14,7 +14,7 @@ class AreaPainter:
         self.areaEndPoint = None
         self.areas = [[[0, 0], [0, 0]]]
 
-    def paintAreasAddGatilho(self, frame):
+    def paintAreasAddTrigger(self, frame):
         areas = np.zeros_like(frame, np.uint8)
 
         # Draw saved areas
@@ -35,13 +35,13 @@ class AreaPainter:
         areas = np.zeros_like(frame)
         h, w = frame.shape[:2]
         
-        for gatilho in gatilhos.triggerList:
-            startPoint = (int(gatilho.areaStartX * w), int(gatilho.areaStartY * h))
-            endPoint = (int(gatilho.areaEndX * w), int(gatilho.areaEndY * h))
+        for trigger in triggers.triggersList:
+            startPoint = (int(trigger.areaStartX * w), int(trigger.areaStartY * h))
+            endPoint = (int(trigger.areaEndX * w), int(trigger.areaEndY * h))
             
-            if gatilho.acionado:
-                areaColor = self.AREA_COLOR_GATILHO_ACIONADO
-            elif gatilho.bDetectionInside:
+            if trigger.fired:
+                areaColor = self.AREA_COLOR_TRIGGER_FIRED
+            elif trigger.bDetectionInside:
                 areaColor = self.AREA_COLOR_DETECTING
             else:
                 areaColor = self.AREA_COLOR_STANDARD

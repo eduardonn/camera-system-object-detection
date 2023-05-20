@@ -1,8 +1,8 @@
 backgroundColor = 'rgb(35, 35, 35)'
 buttonHoverColor = 'rgb(80, 80, 80)'
 buttonPressedColor = 'rgb(110, 110, 110)'
-gatilhoPadraoColor = 'rgb(45, 45, 45)'
-gatilhoAcionadoColor = 'rgb(100, 0, 0)'
+triggerStandardColor = 'rgb(45, 45, 45)'
+triggerFiredColor = 'rgb(100, 0, 0)'
 
 windowStyle = '''
     *{
@@ -68,16 +68,16 @@ scrollAreaStyle = '''
     }
 '''
 
-gatilhoPadrao = '''
+triggerStandard = '''
     QWidget#triggerBackground {
-        background-color: ''' + gatilhoPadraoColor + ''';
+        background-color: ''' + triggerStandardColor + ''';
         border: 2px inset gray;
     }
     '''
 
-gatilhoAcionado = '''
+triggerFired = '''
     QWidget#triggerBackground {
-        background-color: ''' + gatilhoAcionadoColor + ''';
+        background-color: ''' + triggerFiredColor + ''';
         border: 2px inset red;
     }
     '''
@@ -90,7 +90,7 @@ imageStyle = '''
     }
 '''
 
-titulo = '''
+title = '''
     * {
         font-weight: bold;
     }

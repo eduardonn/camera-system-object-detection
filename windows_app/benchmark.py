@@ -1,6 +1,6 @@
 import time, math
 import numpy as np
-import gatilhos
+import triggers
 
 class Benchmark:
     def __init__(self, name):
@@ -35,7 +35,7 @@ class Benchmark:
             return
 
         executionTime = time.time() - self.executionInitTime
-        acuracia = gatilhos.triggerList[0].tempoPermaneceu / executionTime * 100
+        acuracia = triggers.triggersList[0].stayedTime / executionTime * 100
         acuraciaStr = str(round(acuracia, 2)).replace('.', ',')
 
         print(f'----------BENCHMARK [{self.name}]----------')
@@ -47,5 +47,5 @@ class Benchmark:
         # print(f'Max time:\t{round(self.detectionTimeList.max(), 3)}s')
         # print(f'Min time:\t{round(self.detectionTimeList.min(), 3)}s')
         print(f'Total execution time:\t{round(executionTime, 3)}s')
-        print(f'Tempo de Permanencia: {gatilhos.triggerList[0].tempoPermaneceu}')
-        print(f'Acurácia: {acuraciaStr}%')
+        print(f'Max Stay Time: {triggers.triggersList[0].stayedTime}')
+        print(f'Accuracy: {acuraciaStr}%')

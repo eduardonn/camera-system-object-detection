@@ -5,7 +5,7 @@ import numpy as np
 class BlobSizeTester:
     filePath = __file__[:-len(os.path.basename(__file__))]
     personTesterImg = cv2.imread(
-        filePath + '/assets/blob-size-person-tester.png',
+        filePath + '../assets/blob-size-person-tester.png',
         cv2.IMREAD_UNCHANGED)
     aspectRatio = (float(personTesterImg.shape[1]) / personTesterImg.shape[0])
     testersList = []

@@ -3,8 +3,7 @@ import time
 import cv2
 from queue import Queue
 from PyQt5.QtCore import QThread
-from blob_size_tester import BlobSizeTester as dt
-from benchmark import Benchmark
+from helpers.blob_size_tester import BlobSizeTester as dt
 
 class ImageManager:
     onUpdateFrame = []
@@ -64,7 +63,6 @@ class ImageManager:
         '''
         Deliver frames to subscribed functions
         '''
-        lastFrameTime = time.time()
 
         while True:
             initTime = time.time()
@@ -88,11 +86,6 @@ class ImageManager:
                 if self.bVideoEnded:
                     for function in self.onVideoEnd:
                         function()
-                    # os._exit(0)
-
-            # time.sleep(0.005)
-            # print('DeltaTime:', time.time() - lastFrameTime)
-            # lastFrameTime = time.time()
             
             sleepTime = self.frametime - (time.time() - initTime)
             if sleepTime > 0.011:
@@ -106,7 +99,3 @@ class ImageManager:
 
     def togglePauseVideo(self):
         self.isVideoPaused = not self.isVideoPaused
-    
-    # def terminateDetectors(self):
-    #     for p in self.detectorProcesses:
-    #         p.terminate()

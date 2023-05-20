@@ -5,7 +5,7 @@ import cv2
 import math
 from PyQt5.QtCore import QThread
 from benchmark import Benchmark
-import gatilhos
+import triggers
 
 class SSDDetector(QThread):
     def __init__(self, onFrameProcessed):
@@ -46,12 +46,13 @@ class SSDDetector(QThread):
                     self.bDetect = False
                     continue
 
-                if len(gatilhos.triggerList) != 0:
+                if len(triggers.triggersList) != 0:
                     if self.onlyDetectCroppedFrame:
                         croppedFrame = self.frame[
                             self.resizeStartPoint[0]:self.resizeEndPoint[0],
                             self.resizeStartPoint[1]:self.resizeEndPoint[1]
                         ]
+                        
                         detections = self.detect(croppedFrame)
                         self.detections = self.convertCoordsCroppedToOriginal(detections)
                     else:
@@ -70,13 +71,14 @@ class SSDDetector(QThread):
     def detect(self, frame):
         self.benchmark.startTimer()
 
-        blobShape = (int(self.blobSizes[0]
-                     * self.aspectRatio
-                    #  * self.detectionAreaSizeMultiplier
-                    ),
-                    int(self.blobSizes[0]
-                    # * self.detectionAreaSizeMultiplier
-                    ))
+        blobShape = (
+            int(self.blobSizes[0]
+                * self.aspectRatio
+                #  * self.detectionAreaSizeMultiplier
+            ),
+            int(self.blobSizes[0]
+                # * self.detectionAreaSizeMultiplier
+            ))
         blob = cv2.dnn.blobFromImage(frame, 1/255.0, blobShape, 127.5)
         self.net.setInput(blob)
         detections = self.net.forward()
@@ -126,20 +128,20 @@ class SSDDetector(QThread):
         '''
         Update detection area
         '''
-        if len(gatilhos.triggerList) == 0: return
+        if len(triggers.triggersList) == 0: return
 
         startPoint = [math.inf, math.inf]
         endPoint = [-math.inf, -math.inf]
 
-        for gatilho in gatilhos.triggerList:
-            if gatilho.areaStartY < startPoint[0]:
-                startPoint[0] = gatilho.areaStartY
-            if gatilho.areaEndY > endPoint[0]:
-                endPoint[0] = gatilho.areaEndY
-            if gatilho.areaStartX < startPoint[1]:
-                startPoint[1] = gatilho.areaStartX
-            if gatilho.areaEndX > endPoint[1]:
-                endPoint[1] = gatilho.areaEndX
+        for trigger in triggers.triggersList:
+            if trigger.areaStartY < startPoint[0]:
+                startPoint[0] = trigger.areaStartY
+            if trigger.areaEndY > endPoint[0]:
+                endPoint[0] = trigger.areaEndY
+            if trigger.areaStartX < startPoint[1]:
+                startPoint[1] = trigger.areaStartX
+            if trigger.areaEndX > endPoint[1]:
+                endPoint[1] = trigger.areaEndX
         
         frameHeight, frameWidth = self.frame.shape[:2]
 
