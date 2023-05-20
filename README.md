@@ -21,7 +21,7 @@ The Android app is used to receive the notifications sent by the Windows app and
 ### Android Interface
 <img src="screenshots/Interfaces_Android.png" width="100%">
 
-## Technologies applied
+## Technologies Applied
 
 | Name                        | Purpose                   |
 | --------------------------- | ------------------------- |
