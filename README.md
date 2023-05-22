@@ -10,21 +10,21 @@ The Android app is used to receive the notifications sent by the Windows app and
 
 ### Windows Interface
 #### Home
-<img src="screenshots/Interface_Principal.png" width="100%">
+<img src="screenshots/Interface_Home.png" height='512px'>
 
-#### Triggers Managing
-<img src="screenshots/Interface_Gerenciamento_Gatilhos.png" width="100%">
+#### Triggers Manager
+<img src="screenshots/Interface_Triggers_Manager.png" height='512px'>
 
 #### Add Triggers
-<img src="screenshots/Interface_Adicionar_Gatilho.png" width="100%">
+<img src="screenshots/Interface_Add_Trigger.png" height='512px'>
 
 ### Android Interface
-<img src="screenshots/Interfaces_Android.png" width="100%">
+<img src="screenshots/Interfaces_Android.png" height='512px'>
 
 ## Technologies Applied
 
 | Name                        | Purpose                   |
 | --------------------------- | ------------------------- |
-| [**PyQt5**](https://www.riverbankcomputing.com/software/pyqt/) | Interface para Windows |
-| [**OpenCV**](https://opencv.org/) | Manipulação de Imagens e Aplicação da Rede Neural |
-| [**Flutter**](https://flutter.dev/) | Interface para Android |
+| [**PyQt5**](https://www.riverbankcomputing.com/software/pyqt/) | Interface for Windows |
+| [**OpenCV**](https://opencv.org/) | Image manipulation and AI processing |
+| [**Flutter**](https://flutter.dev/) | Interface for Android |
