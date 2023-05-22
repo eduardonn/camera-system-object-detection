@@ -3,8 +3,6 @@ import 'package:flutter_android_app/settings_screen.dart';
 import 'package:flutter_android_app/home_page.dart';
 import 'package:flutter_android_app/alarm_page.dart';
 import 'package:flutter_android_app/background_service_notifications.dart';
-// import 'package:flutter_windowmanager/flutter_windowmanager.dart';
-// import 'package:flutter_background_service/flutter_background_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -26,8 +24,8 @@ class MyApp extends StatelessWidget {
       initialRoute: '/',
       routes: {
         '/': (context) => const HomePage(),
-        '/settings': (context) => SettingsScreen(),
-        '/alarm': (context) => AlarmPage(),
+        '/settings': (context) => const SettingsScreen(),
+        '/alarm': (context) => const AlarmPage(),
       },
     );
   }

@@ -5,11 +5,9 @@ import 'dart:io';
 import 'dart:core';
 import 'dart:async';
 import 'dart:typed_data';
-import 'package:flutter_android_app/logger.dart';
 import 'package:flutter_android_app/image_receiver.dart';
 
 class ImageConnection extends ChangeNotifier {
-  // String url = '127.0.0.1:4444';
   final FRAGMENT_SIZE = 1000;
   final MAX_WAIT_TIME_MILSEC = 5000;
 
@@ -34,12 +32,10 @@ class ImageConnection extends ChangeNotifier {
       switch (ConnectionState.values[event?['state']]) {
         case ConnectionState.done:
           // If Notifications Connection is established, start Image Connection
-          debugPrint('[Images] Starting connection');
           start();
           break;
         default:
           // If Notifications Connection is lost, stop Image Connection
-          // debugPrint('[Images] Stoping connection');
           stop();
       }
     });
@@ -73,7 +69,6 @@ class ImageConnection extends ChangeNotifier {
 
   void _connect() async {
     if (_connectionState == ConnectionState.waiting) {
-      debugPrint('[Images] State is waiting. Returning');
       return;
     }
     _connectionState = ConnectionState.waiting;
@@ -82,14 +77,12 @@ class ImageConnection extends ChangeNotifier {
 
     final prefs = await SharedPreferences.getInstance();
     String? serverIP = prefs.getString('server_ip');
-    debugPrint('[Images] Trying to connect to $serverIP');
 
     try {
       _socket = await Socket.connect(serverIP, 4444,
           timeout: const Duration(seconds: 5));
       _socket?.handleError((error) => debugPrint('socket error'));
     } catch (e) {
-      // debugPrint('[Images] Connection failed');
       _connectionState = ConnectionState.none;
       return;
     }
@@ -98,7 +91,6 @@ class ImageConnection extends ChangeNotifier {
     FlutterBackgroundService().invoke('stopRequestingVideo');
     _connectionState = ConnectionState.done;
     _timeSinceLastResponse.reset();
-    debugPrint('[Images] Connected to $serverIP');
 
     _socket?.listen((event) {
       _timeSinceLastResponse.reset();
@@ -121,7 +113,6 @@ class ImageConnection extends ChangeNotifier {
       notifyListeners();
     } catch (e) {
       debugPrint('Exception: ${e.toString()}');
-      // debugPrint('Datagram from ${d.address.address}:${d.port}: $message');
     }
   }
 }

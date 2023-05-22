@@ -1,6 +1,4 @@
-import 'package:flutter/cupertino.dart';
 import 'dart:async';
-import 'dart:io';
 import 'dart:core';
 
 import 'package:flutter/material.dart';
@@ -36,14 +34,14 @@ class _LoggerState extends State<Logger> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: EdgeInsets.all(8.0),
+      margin: const EdgeInsets.all(8.0),
       decoration: BoxDecoration(
         color: Colors.white,
         border: Border.all(color: Colors.black54, width: 4.0),
       ),
       child: ListView(
         // controller: _controller,
-        padding: EdgeInsets.all(8.0),
+        padding: const EdgeInsets.all(8.0),
         shrinkWrap: true,
         children: [
           Text(_text),

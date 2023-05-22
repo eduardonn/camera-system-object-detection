@@ -2,7 +2,6 @@ import 'package:device_apps/device_apps.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:flutter_android_app/image_connection.dart';
-import 'package:flutter_android_app/triggers_notifications.dart';
 import 'package:flutter_windowmanager/flutter_windowmanager.dart';
 
 class HomePage extends StatefulWidget {
@@ -29,7 +28,6 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
 
-    print('home_page initState() called');
     Future.delayed(const Duration(seconds: 2),
         () => appLifecycleState = AppLifecycleState.resumed);
 
@@ -40,17 +38,11 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
           FlutterWindowManager.FLAG_SHOW_WHEN_LOCKED);
       await FlutterWindowManager.addFlags(
           FlutterWindowManager.FLAG_TURN_SCREEN_ON);
-      // print('[home_page] alarmReceived received');
 
-      // TODO: Send image to alarm page
-      // triggerInfo?['frame'] = imageConnection.frameReceived;
-
-      print('appLifecycleState: $appLifecycleState');
       if (appLifecycleState == AppLifecycleState.paused) {
         DeviceApps.openApp('dev.eduardonn.sursystem_android_app');
       }
 
-      // if (!context.mounted) return;
       Navigator.pushNamed(context, '/alarm', arguments: triggerInfo);
     });
 
@@ -60,7 +52,6 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
-    print('[Home Page] Dispose called');
     imageConnection.stop();
     super.dispose();
   }
@@ -93,17 +84,6 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
               ),
             ),
           ),
-          // RawMaterialButton(
-          //   onPressed: () => Navigator.pushNamed(context, '/alarm',
-          //       arguments: {'local': 'Teste'}),
-          //   child: const Padding(
-          //     padding: EdgeInsets.all(8.0),
-          //     child: Icon(
-          //       Icons.notifications_active,
-          //       size: 36,
-          //     ),
-          //   ),
-          // ),
         ],
         title: const Text('Camera Surveillance System'),
       ),
@@ -112,18 +92,6 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           const Spacer(),
-          // Row(
-          // mainAxisAlignment: MainAxisAlignment.center,
-          // children: [
-          // MaterialButton(
-          //     padding: const EdgeInsets.all(12.0),
-          //     child: const Icon(Icons.notifications),
-          //     onPressed: () async {
-          //       await Future.delayed(const Duration(seconds: 6));
-          //       _triggersNotifications.notify('title teste', 'body teste');
-          //     }),
-          // ],
-          // ),
           if (_gridOn)
             OrientationBuilder(
               builder: (context, orientation) {
@@ -147,56 +115,6 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
             )
           else
             _imageWidget(),
-          // Flexible(
-          //   child: GridView.count(
-          //     shrinkWrap: true,
-          //     childAspectRatio: 12 / 2.5,
-          //     clipBehavior: Clip.none,
-          //     crossAxisCount: 2,
-          //     children: <Widget>[
-          //       Padding(
-          //         padding: const EdgeInsets.all(8.0),
-          //         child: ElevatedButton(
-          //           child: const Text("Is App Running"),
-          //           onPressed: () async {
-          //             Logger.log(
-          //                 '[From Service] is running: ${await FlutterBackgroundService().isRunning()}');
-          //           },
-          //         ),
-          //       ),
-          //       Container(
-          //         padding: const EdgeInsets.all(8.0),
-          //         child: ElevatedButton(
-          //           child: const Text("Force Start Service"),
-          //           onPressed: () {
-          //             initializeService(true);
-          //           },
-          //         ),
-          //       ),
-          //       Padding(
-          //         padding: const EdgeInsets.all(8.0),
-          //         child: ElevatedButton(
-          //           child: const Text("Stop Service"),
-          //           onPressed: () {
-          //             FlutterBackgroundService().invoke("stopService");
-          //             imageConnection.stop();
-          //           },
-          //         ),
-          //       ),
-          //       Padding(
-          //         padding: const EdgeInsets.all(8.0),
-          //         child: ElevatedButton(
-          //           child: const Text("Send appOpened"),
-          //           onPressed: () {
-          //             FlutterBackgroundService().invoke("appOpened");
-          //             imageConnection.stop();
-          //           },
-          //         ),
-          //       ),
-          //     ],
-          //   ),
-          // ),
-          // Expanded(child: Logger()),
           const Spacer(),
           Align(
             alignment: Alignment.bottomCenter,

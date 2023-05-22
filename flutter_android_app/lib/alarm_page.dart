@@ -21,10 +21,8 @@ class _AlarmPage extends State<AlarmPage> {
   void initState() {
     super.initState();
     Wakelock.enable();
-    print('[AlarmPage] Constructor called');
     FlutterBackgroundService().invoke('alarmConsumed');
     Future.delayed(Duration(seconds: TIME_ALARM_ON), () {
-      print('$TIME_ALARM_ON seconds passed');
       Wakelock.disable();
       // SystemNavigator.pop();
       Vibration.cancel();
@@ -74,9 +72,9 @@ class _AlarmPage extends State<AlarmPage> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Container(
-                    margin: EdgeInsets.symmetric(vertical: 12.0),
+                    margin: const EdgeInsets.symmetric(vertical: 12.0),
                     child: const Text(
-                      'Detecção Realizada',
+                      'Trigger Fired',
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         color: Colors.white,
@@ -85,29 +83,17 @@ class _AlarmPage extends State<AlarmPage> {
                       ),
                     ),
                   ),
-                  Container(
-                    // margin: EdgeInsets.only(bottom: 12.0),
-                    child: Text(
-                      _alarmName,
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        decoration: TextDecoration.none,
-                        fontSize: 36,
-                      ),
+                  Text(
+                    _alarmName,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      decoration: TextDecoration.none,
+                      fontSize: 36,
                     ),
                   ),
                 ],
               ),
-              // if (_frame != null)
-              //   Image.memory(_frame!)
-              // else
-              //   AspectRatio(
-              //     aspectRatio: 16 / 9,
-              //     child: Container(
-              //       color: Colors.grey,
-              //     ),
-              //   ),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
@@ -117,12 +103,12 @@ class _AlarmPage extends State<AlarmPage> {
                       Vibration.cancel();
                       Navigator.pop(context);
                     },
-                    text: 'Verificar',
+                    text: 'Check',
                   ),
                   alarmButton(
                     backgroundColor: Colors.red,
                     onPressed: () => SystemNavigator.pop(),
-                    text: 'Ignorar',
+                    text: 'Ignore',
                   ),
                 ],
               )

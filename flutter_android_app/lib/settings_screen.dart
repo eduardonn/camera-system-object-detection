@@ -40,11 +40,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
     await prefs.setString('server_ip', textController.text);
     await prefs.setBool('receive_notifications', _receiveNotifications ?? true);
     await prefs.setBool('receive_alarms', _receiveAlarms ?? true);
-    // debugPrint('saving server_ip as ${textController.text}');
 
     bool isServiceRunning = await FlutterBackgroundService().isRunning();
     while (!isServiceRunning) {
-      await Future.delayed(Duration(seconds: 3));
+      await Future.delayed(const Duration(seconds: 3));
       isServiceRunning = await FlutterBackgroundService().isRunning();
     }
 
@@ -78,7 +77,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
               children: [
                 const Text('Receive Notifications'),
                 Checkbox(
-                  // value: snapshot.data?._receiveNotifications,
                   value: _receiveNotifications ?? false,
                   onChanged: (value) =>
                       setState(() => _receiveNotifications = value),
@@ -90,7 +88,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 const Text('Receive Alarms'),
                 Checkbox(
                   value: _receiveAlarms ?? false,
-                  // value: snapshot.data?._receiveAlarms,
                   onChanged: (value) => setState(() => _receiveAlarms = value),
                 ),
               ],

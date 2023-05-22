@@ -19,7 +19,6 @@ class ImageReceiver {
 
   void addPacket(Uint8List event) {
     _eventLength = event.length;
-    // debugPrint('_eventLength: $_eventLength');
 
     int startIndexToSearchFirstFrame = 0;
     if (_hasFirstFrame) {
@@ -41,21 +40,17 @@ class ImageReceiver {
         _indexFillingFrame = 0;
 
         if (_eventLength > bytesLeftToFillImage) {
-          // debugPrint('more frames');
           handleFirstImagePacket(event, bytesLeftToFillImage);
         }
       }
     } else {
       handleFirstImagePacket(event, startIndexToSearchFirstFrame);
-      // if (hasData) debugPrint('handleFirstImagePacket returned true');
     }
   }
 
   bool handleFirstImagePacket(Uint8List event, startIndex) {
-    // TODO: Doesn't need to return bool
     int imageStartIndex = searchFirstPacket(event, startIndex);
     if (imageStartIndex != -1) {
-      // int bytesLeftToFillImage = _imageSize;
       int imageInEventLength = _eventLength - imageStartIndex;
 
       if (imageInEventLength >= _imageSize) {
@@ -72,16 +67,13 @@ class ImageReceiver {
         _indexFillingFrame = 0;
 
         bool hasData = imageInEventLength != _imageSize;
-        // if (hasData)
-        //   debugPrint(
-        //       'handleFirstImagePacket returned true | $_eventLength | $imageInEventLength | $_imageSize');
+
         return hasData;
       } else {
         try {
           _frameReceived.setAll(_indexFillingFrame,
               event.getRange(imageStartIndex, _eventLength));
         } catch (e) {
-          debugPrint('On handleFirstFrame');
           debugPrint(e.toString());
           return false;
         }
@@ -94,8 +86,7 @@ class ImageReceiver {
   }
 
   int searchFirstPacket(Uint8List msg, int startIndex) {
-    // If the first three elements are '-' (ASCII 45), it's the first frame
-    // int msgLength = msg.length;
+    // If the first four elements are '-' (ASCII 45), it's the first frame
     int streak = 0;
 
     int bytesVerified = 0;
@@ -103,7 +94,6 @@ class ImageReceiver {
       bytesVerified++;
       if (msg[i] == 45) {
         if (++streak == 4) {
-          // print('Found first frame');
           _hasFirstFrame = true;
           _imageSize = msg.sublist(i + 1, i + 5).buffer.asInt32List()[0];
           _frameReceived = Uint8List(_imageSize);
@@ -115,8 +105,7 @@ class ImageReceiver {
     }
     _hasFirstFrame = false;
     timesFrameNotFoundStreamController.add(++_timesFrameNotFound);
-    // Logger.log(
-    //     'No first packet | _eventLength: $_eventLength | bytes verified: ${bytesVerified}');
+
     return -1;
   }
 }
