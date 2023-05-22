@@ -18,8 +18,7 @@ class GUI(QWidget):
 
     def __init__(self):
         super().__init__()
-        self.filePath = __file__[:-len(os.path.basename(__file__))]
-        self.camImgs = []
+        self.camImgs: list[ImageWidget] = []
         self.bVisualizarAreas = True
         self.triggersThread = triggers.initTriggers(self.updateTriggerState)
         self.detector = SSDDetector(triggers.updateTriggersAfterDetection)
@@ -42,22 +41,21 @@ class GUI(QWidget):
 
     def initMainWindow(self):
         self.setWindowTitle('Camera Surveillance System')
-        self.setWindowIcon(QIcon(self.filePath + '/assets/icone.png'))
+        self.setWindowIcon(QIcon('./assets/icon.png'))
 
-        layout.initMainWindowLayout(self)
+        layout.initMainWindowLayout(self, triggers.Trigger)
 
     def initImgWidget(self):
         h, w = self.imgManager.frameResolution
 
-        initialHeight = 300
+        initialHeight = 280
         aspectRatio = float(w) / float(h)
         initialWidth = int(initialHeight * aspectRatio)
         self.initialCamImgShape = (initialWidth, initialHeight)
         self.focusedCamImgShape = (initialWidth * 2, initialHeight * 2)
         self.camImgShape = self.initialCamImgShape
 
-        # Configurar imagem "sem sinal"
-        frame = cv2.imread(self.filePath + "/assets/sem_sinal.jpg")
+        frame = cv2.imread("./assets/no_signal.jpg")
 
         self.focusOnImage(self.camImgs[0])
         
@@ -148,9 +146,6 @@ class GUI(QWidget):
 
         self.server.fireTrigger(trigger)
 
-    def setSilenceAlarm(value: bool) -> None:
-        triggers.Trigger.isAlarmSilenced = value
-
     def keyPressEvent(self, e):
         if e.key() == Qt.Key_2:
             self.server.sendNotification(triggers.triggersList[0])
@@ -159,7 +154,7 @@ class GUI(QWidget):
         elif e.key() == Qt.Key_4:
             self.imgManager.togglePauseVideo()
         elif e.key() == Qt.Key_5:
-            playsound(self.filePath + '/sounds/mixkit-classic-short-alarm.wav')
+            playsound('./sounds/mixkit-classic-short-alarm.wav')
         elif e.key() == Qt.Key_T:
             coordsGlobal = QCursor.pos()
             coordsLocal = self.camImgs[0].mapFromGlobal(coordsGlobal)

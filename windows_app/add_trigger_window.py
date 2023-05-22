@@ -17,8 +17,7 @@ class AddTriggerWindow(QWidget):
         self.triggersWindow = triggersWindow
         self.setImageSignal.connect(lambda pixmap: self.camImg.setPixmap(pixmap))
         
-        filePath = __file__[:-len(os.path.basename(__file__))]
-        self.setWindowIcon(QIcon(filePath + '/Assets/TriggersIcon.png'))
+        self.setWindowIcon(QIcon('./Assets/TriggersIcon.png'))
         self.bDrawing = False
 
         layout.addTriggerWindowLayout(self)
@@ -59,7 +58,6 @@ class AddTriggerWindow(QWidget):
         ImageManager.onUpdateFrame.remove(self.updateFrame)
 
     def updateFrame(self, frame):
-        # h, w = ImageManager.frame.shape[:2]
         frameResized = cv.resize(frame, self.camImgShape)
         self.areaPainter.paintAreasAddTrigger(frameResized)
 
@@ -78,7 +76,7 @@ class AddTriggerWindow(QWidget):
             return
 
         if self.inputMaxStayTime.text() == '':
-            print('Stay time obligatory')
+            print('Stay time is obligatory')
             return
 
         if len(self.areaPainter.areas) == 0:
@@ -87,7 +85,7 @@ class AddTriggerWindow(QWidget):
 
         if (self.areaPainter.areas[0][0][0] - self.areaPainter.areas[0][1][0] >= 0
             or self.areaPainter.areas[0][0][1] - self.areaPainter.areas[0][1][1] >= 0):
-            print('Invalid Area. Draw again.')
+            print('Invalid area. Draw again.')
             return
 
         # Normaliza areas

@@ -1,11 +1,9 @@
 import cv2
-import os
 import numpy as np
 
 class BlobSizeTester:
-    filePath = __file__[:-len(os.path.basename(__file__))]
     personTesterImg = cv2.imread(
-        filePath + '../assets/blob-size-person-tester.png',
+        './assets/blob-size-person-tester.png',
         cv2.IMREAD_UNCHANGED)
     aspectRatio = (float(personTesterImg.shape[1]) / personTesterImg.shape[0])
     testersList = []
@@ -43,20 +41,3 @@ class BlobSizeTester:
         frameCrop[:] = personTesterImgResized[:, :, :3] * alphaPerson + frameCrop * alphaFrame
 
         return frame
-
-if __name__ == '__main__':
-    filePath = __file__[:-len(os.path.basename(__file__))]
-
-    cap = cv2.VideoCapture(filePath + '/recordings/Residencia Noite.mp4')
-    personImg = cv2.imread(filePath + '/assets/detection-tester-img.png', cv2.IMREAD_UNCHANGED)
-    cap.set(cv2.CAP_PROP_POS_MSEC, 272000)
-
-    while True:
-        ret, frameVideo = cap.read()
-        frameVideo = cv2.resize(frameVideo, (1000, 600))
-        # testPerson = cv2.resize(testPerson, (400, 400))
-        drawnFrame = BlobSizeTester.drawPerson(frameVideo, (150, 300))
-        cv2.imshow('tester', drawnFrame)
-
-        if cv2.waitKey(1) & 0xFF == ord('q'):
-            break

@@ -1,4 +1,3 @@
-import os
 from PyQt5.QtWidgets import QLabel, QPushButton, QVBoxLayout, QHBoxLayout, QSizePolicy, QSlider
 from PyQt5.QtWidgets import QWidget, QComboBox, QTimeEdit, QLineEdit, QScrollArea, QCheckBox, QLayout
 from PyQt5.QtGui import QCursor, QIcon, QIntValidator
@@ -12,9 +11,7 @@ if typing.TYPE_CHECKING:
     from add_trigger_window import AddTriggerWindow
     from triggers_window import TriggersWindow
 
-filePath = __file__[:-len(os.path.basename(__file__))]
-
-def initMainWindowLayout(UI: "GUI"):
+def initMainWindowLayout(UI: "GUI", Triggers: "Trigger"):
     UI.setGeometry(50, 50, 1250, 660)
     UI.setObjectName('window')
     UI.setStyleSheet(css.windowStyle)
@@ -36,15 +33,19 @@ def initMainWindowLayout(UI: "GUI"):
     # UI.checkboxViewTriggers.setChecked(True)
 
     # CheckBox silence alarm
-    checkboxSilenceAlarms = QCheckBox('Silence Alarms')
-    checkboxSilenceAlarms.setStyleSheet(css.checkBoxStyle)
-    checkboxSilenceAlarms.clicked.connect(UI.setSilenceAlarm)
+    Triggers.checkboxSilenceAlarms = QCheckBox('Silence Alarms')
+    Triggers.checkboxSilenceAlarms.setStyleSheet(css.checkBoxStyle)
+    Triggers.checkboxSilenceAlarms.setChecked(True)
 
     # Image
     UI.camImgs.append(ImageWidget(UI.handleImageClick))
     UI.camImgs[0].setStyleSheet(css.imageStyle)
+    # UI.camImgs[0].setScaledContents(True)
+    # UI.camImgs[0].setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Ignored)
+    # UI.camImgs[0].setMinimumSize(800, 600)
     UI.camImgs.append(ImageWidget(UI.handleImageClick))
     UI.camImgs[1].setStyleSheet(css.imageStyle)
+    # UI.camImgs[1].setMaximumWidth(100)
 
     # Labels
     lClientConnected = QLabel('Client: ')
@@ -86,8 +87,8 @@ def initMainWindowLayout(UI: "GUI"):
     vBoxImages = QVBoxLayout()
     vBoxImages.setAlignment(Qt.AlignCenter)
     vBoxSettings = QVBoxLayout()
-    vBoxSettings.setAlignment(Qt.AlignTop)
     vBoxSettings.setSpacing(10)
+    vBoxSettings.setAlignment(Qt.AlignTop)
     vBoxImages.addWidget(UI.camImgs[0])
     vBoxImages.addWidget(UI.camImgs[1])
     hBoxImg1BlobSize = QHBoxLayout()
@@ -102,7 +103,7 @@ def initMainWindowLayout(UI: "GUI"):
     vBoxSettings.addWidget(lSettings, alignment=Qt.AlignTop | Qt.AlignCenter)
     vBoxSettings.addWidget(UI.checkboxViewTriggers)
     vBoxSettings.addWidget(checkboxBlobSize)
-    vBoxSettings.addWidget(checkboxSilenceAlarms)
+    vBoxSettings.addWidget(Triggers.checkboxSilenceAlarms)
     hBoxBlobSizeAjuste.addWidget(UI.personTesterSizeSlider)
     hBoxBlobSizeAjuste.addWidget(UI.lPersonSize)
     vBoxSettings.addLayout(hBoxBlobSizeAjuste)
@@ -164,7 +165,7 @@ def triggersWindowLayout(UI: "TriggersWindow"):
 def addTriggerWindowLayout(UI: "AddTriggerWindow"):
     UI.setObjectName('window')
     UI.setStyleSheet(css.windowStyle)
-    UI.setGeometry(100, 50, 1150, 440)
+    UI.setGeometry(100, 100, 1150, 440)
     UI.setWindowTitle('Add Trigger')
 
     # Buttons
@@ -183,12 +184,12 @@ def addTriggerWindowLayout(UI: "AddTriggerWindow"):
     lDetectionTime.setMaximumHeight(20)
     lMaxStayTime = QLabel("Maximum Stay Time")
     lMaxStayTime.setMaximumHeight(20)
-    lSeconds = QLabel("seconds")
+    lSeconds = QLabel("sec")
     lSeconds.setMaximumHeight(20)
     lSeconds.setMinimumWidth(20)
     lAction = QLabel("Action")
     lAction.setMaximumHeight(20)
-    lUntil = QLabel("until")
+    lUntil = QLabel("to")
     lUntil.setMaximumHeight(20)
     lUntil.setMaximumWidth(40)
 
@@ -240,13 +241,13 @@ def addTriggerOnViewList(UI: "TriggersWindow", trigger: "Trigger"):
     
     # Button delete
     btnDelete = QPushButton()
-    btnDelete.setIcon(QIcon(filePath + '/Assets/delete_white.png'))
+    btnDelete.setIcon(QIcon('./Assets/delete_white.png'))
     btnDelete.clicked.connect(trigger.remove)
     btnDelete.setCursor(QCursor(Qt.PointingHandCursor))
     btnDelete.setStyleSheet(css.btnTriggerStyle)
     
     # Button reset
-    btnReset = QPushButton('Resetar')
+    btnReset = QPushButton('Reset')
     btnReset.clicked.connect(trigger.reset)
     btnReset.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Maximum)
     btnReset.setStyleSheet(css.btnTriggerStyle)
@@ -263,7 +264,7 @@ def addTriggerOnViewList(UI: "TriggersWindow", trigger: "Trigger"):
     lAction = QLabel("Action: " + trigger.action)
     lMaxStayTime = QLabel("Maximum Stay Time: " + str(trigger.maxStayTime))
     lActiveTime = QLabel("Active Time:")
-    lActiveTimeValues = QLabel(trigger.initialTime + ' até ' + trigger.finalTime)
+    lActiveTimeValues = QLabel(trigger.initialTime + ' to ' + trigger.finalTime)
     lStayedTime = QLabel('Stayed Time:')
     trigger.lStayedTime = QLabel(str(round(trigger.stayedTime, 3)))
 

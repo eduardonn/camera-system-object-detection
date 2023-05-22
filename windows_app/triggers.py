@@ -15,13 +15,15 @@ import os
 from playsound import playsound
 from datetime import datetime
 from PyQt5.QtCore import QThread, pyqtSignal
+from PyQt5.QtWidgets import QCheckBox
 import database as db
 import layout
 
 class Trigger:
+    checkboxSilenceAlarms: QCheckBox = None
     soundThread = None
     triggersWindow = None
-    shouldPlaySound = False
+    keepPlayingSound = False
     isAlarmSilenced = False
     MAX_SOUNDING_TIME = 10
 
@@ -68,7 +70,7 @@ class Trigger:
         self.stayedTime = 0.
         self.timeSinceLastUpdate = 0.
         self.fired = False
-        Trigger.shouldPlaySound = False
+        Trigger.keepPlayingSound = False
 
         if self.widget is not None:
             self.triggersWindow.resetTriggerUI.emit(self)
@@ -95,22 +97,21 @@ class Trigger:
         Trigger.soundThread.start()
 
     def playAlarmSound():
-        Trigger.shouldPlaySound = True
-        filePath = __file__[:-len(os.path.basename(__file__))]
+        Trigger.keepPlayingSound = True
         initTime = time.time()
 
-        while Trigger.shouldPlaySound:
-            playsound(filePath + '/sounds/mixkit-warning-alarm-buzzer.wav')
+        while Trigger.keepPlayingSound:
+            playsound('./sounds/mixkit-warning-alarm-buzzer.wav')
             time.sleep(0.5)
             if time.time() - initTime > Trigger.MAX_SOUNDING_TIME:
                 print('alarm stopped')
                 break
 
-        Trigger.shouldPlaySound = False
+        Trigger.keepPlayingSound = False
 
 class UpdateTriggersPeriodicallyThread(QThread):
     '''Update triggers every THREAD_TIME_SLEEP seconds'''
-    changeTriggerStateSignal = pyqtSignal(Trigger, bool) # Changes in UI need to happen in main thread
+    changeTriggerStateSignal = pyqtSignal(Trigger, bool) # Changes in UI must happen in main thread
     isPlayingSound = False
 
     def run(self):
@@ -142,7 +143,7 @@ class UpdateTriggersPeriodicallyThread(QThread):
                     trigger.fired = True
                     print(f'TRIGGER [{trigger.name}] FIRED')
 
-                    if not Trigger.isAlarmSilenced:
+                    if not Trigger.checkboxSilenceAlarms.isChecked():
                         Trigger.startAlarmSound()
 
                     self.changeTriggerStateSignal.emit(trigger, True)

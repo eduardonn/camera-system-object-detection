@@ -10,7 +10,7 @@ import triggers
 class SSDDetector(QThread):
     def __init__(self, onFrameProcessed):
         super(SSDDetector, self).__init__()
-        self.onFrameProcessed = onFrameProcessed # Evento chamado após o término de uma detecção
+        self.onFrameProcessed = onFrameProcessed
         self.blobSizes = [400, 600]
         self.blobSizeRange = [10, 2000]
         self.frame = None
@@ -21,7 +21,6 @@ class SSDDetector(QThread):
         self.onlyDetectCroppedFrame = True
         self.detectionColor = (0, 0, 200)
         self.confidenceDrawDetection = .5
-        self.detectionAreaSizeMultiplier = 1.
         self.benchmark = Benchmark('Detector')
         self.CLASSES = ["background", "aeroplane", "bicycle", "bird", "boat", "bottle", "bus",
                         "car", "cat", "chair", "cow", "diningtable", "dog", "horse", "motorbike",
@@ -58,7 +57,6 @@ class SSDDetector(QThread):
                     else:
                         self.detections = self.detect(self.frame)
 
-                    # Ao terminar uma detecção, chama função
                     self.onFrameProcessed(self.detections)
 
                 time.sleep(.01)
@@ -74,16 +72,14 @@ class SSDDetector(QThread):
         blobShape = (
             int(self.blobSizes[0]
                 * self.aspectRatio
-                #  * self.detectionAreaSizeMultiplier
             ),
             int(self.blobSizes[0]
-                # * self.detectionAreaSizeMultiplier
             ))
         blob = cv2.dnn.blobFromImage(frame, 1/255.0, blobShape, 127.5)
         self.net.setInput(blob)
         detections = self.net.forward()
 
-        self.benchmark.stopTimer(True)
+        self.benchmark.stopTimer()
 
         return detections
 
@@ -95,7 +91,6 @@ class SSDDetector(QThread):
             self.updateDetectionArea()
         else:
             self.aspectRatio = self.frame.shape[1] / self.frame.shape[0]
-            self.detectionAreaSizeMultiplier = 1.
         self.onlyDetectCroppedFrame = value
 
     def convertCoordsCroppedToOriginal(self, detections):
@@ -149,12 +144,6 @@ class SSDDetector(QThread):
         self.resizeStartPoint = (int(startPoint[0] * frameHeight), int(startPoint[1] * frameWidth))
         self.resizeEndPoint = (int(endPoint[0] * frameHeight), int(endPoint[1] * frameWidth))
 
-        detectionAreaHeight = self.resizeEndPoint[0] - self.resizeStartPoint[0]
-        # print('detectionAreaHeight', detectionAreaHeight)
-        # print('frameHeight', frameHeight)
-        self.detectionAreaSizeMultiplier = detectionAreaHeight / frameHeight
-        # print('self.detectionAreaSizeMultiplier', self.detectionAreaSizeMultiplier)
-
         self.croppedFrameResolution = (
             self.resizeEndPoint[0] - self.resizeStartPoint[0],
             self.resizeEndPoint[1] - self.resizeStartPoint[1]
@@ -182,7 +171,7 @@ class SSDDetector(QThread):
         h, w = frame.shape[:2]
         for i in np.arange(0, self.detections.shape[2]):
             idx = int(self.detections[0, 0, i, 1])
-            if idx != 15: continue # Se não for pessoa
+            if idx != 15: continue # If not a person
 
             confidence = self.detections[0, 0, i, 2]
             if confidence > self.confidenceDrawDetection:

@@ -11,11 +11,10 @@ class ImageManager:
     frameResolution = (300, 300)
 
     def __init__(self, maxBufferSize):
-        filePath = __file__[:-len(os.path.basename(__file__))]
         self.isVideo = True
         if self.isVideo:
-            self.cap = cv2.VideoCapture(filePath + '/recordings/tests/Estabelecimento Dia.mp4')
-            self.playRange = (0, 999999) # Video start-end in ms
+            self.cap = cv2.VideoCapture('./recordings/Burglars Break Into Home.mp4')
+            self.playRange = (13000, 23000) # Video start-end in ms
             self.cap.set(cv2.CAP_PROP_POS_MSEC, self.playRange[0])
         else:
             self.cap = cv2.VideoCapture(0)

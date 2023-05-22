@@ -18,8 +18,7 @@ class TriggersWindow(QWidget):
         
         self.setGeometry(300, 200, 700, 440)
         self.setWindowTitle('Triggers')
-        filePath = __file__[:-len(os.path.basename(__file__))]
-        self.setWindowIcon(QIcon(filePath + '/Assets/TriggersIcone.png'))
+        self.setWindowIcon(QIcon('./Assets/TriggersIcon.png'))
 
         layout.triggersWindowLayout(self)
 
