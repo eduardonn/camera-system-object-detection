@@ -8,13 +8,14 @@ from helpers.blob_size_tester import BlobSizeTester as dt
 class ImageManager:
     onUpdateFrame = []
     onVideoEnd = []
+    FPS = 8
     frameResolution = (300, 300)
 
     def __init__(self, maxBufferSize):
         self.isVideo = True
         if self.isVideo:
             self.cap = cv2.VideoCapture('./recordings/Burglars Break Into Home.mp4')
-            self.playRange = (13000, 23000) # Video start-end in ms
+            self.playRange = (0, 23000) # Video start-end in ms
             self.cap.set(cv2.CAP_PROP_POS_MSEC, self.playRange[0])
         else:
             self.cap = cv2.VideoCapture(0)
@@ -25,7 +26,7 @@ class ImageManager:
         if not ret:
             raise Exception('Reading image failed')
         ImageManager.frameResolution = self.lastFrameRead.shape[:2]
-        self.frametime = 1 / 30 # 1 / FPS
+        self.frametime = 1 / ImageManager.FPS
         self.showPersonTester = False
         self.personTesterSize = 2
         dt.addTesterToList((.5, .5))
@@ -86,9 +87,10 @@ class ImageManager:
                     for function in self.onVideoEnd:
                         function()
             
-            sleepTime = self.frametime - (time.time() - initTime)
-            if sleepTime > 0.011:
-                time.sleep(sleepTime - 0.011)
+            elapsedTime = time.time() - initTime
+            sleepTime = self.frametime - elapsedTime
+            if sleepTime > 0.005:
+                time.sleep(sleepTime - 0.002)
 
     def setShowPersonTester(self, value):
         self.showPersonTester = value
